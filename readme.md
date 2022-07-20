@@ -9,7 +9,7 @@ For now, the following formats are supported:
 * [Braille Unicode](https://en.wikipedia.org/wiki/Braille_Patterns) — the universal, language independent encoding. It is recommended to use this format for reading with a screen-reader and a braille display. Unfortunately, few braille embossers support Braille Unicode (if any), so it is difficult to emboss a file containing Braille Unicode.
 * BRF ([Braille ASCII](https://en.wikipedia.org/wiki/Braille_ASCII)) — a widely used electronic braille format. Supported by any braille embosser and many braille displays and notetakers.
 * Local Russian encodings (they are developed and used by Russian braille printing houses):
-  * [Logos](https://logosvos.ru) braille encoding — CP866-based encoding that is also set up by default as "Russian encoding" in the [Index Braille)(https://indexbraille.com) embossers.
+  * [Logos](https://logosvos.ru) braille encoding — CP866-based encoding that is also set up by default as "Russian encoding" in the [Index Braille](https://indexbraille.com) embossers.
   * ["CHTENIE" Publishing House of All-Russia Society of the blind](https://chtenie.spb.ru) braille encoding;
   * GOST braille encoding — the encoding that was accepted in [GOST R 58511-2019 Braille characters and design of braille publications](https://allgosts.ru/11/180/gost_r_58511-2019#:~:text=%D0%93%D0%9E%D0%A1%D0%A2%20%D0%A0%2058511%2D2019%20%D0%A1%D0%B8%D0%BC%D0%B2%D0%BE%D0%BB%D1%8B%20%D0%91%D1%80%D0%B0%D0%B9%D0%BB%D1%8F%20%D0%B8%20%D0%BE%D1%84%D0%BE%D1%80%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%B1%D1%80%D0%B0%D0%B9%D0%BB%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D1%85%20%D0%B8%D0%B7%D0%B4%D0%B0%D0%BD%D0%B8%D0%B9,-%D0%9E%D0%B1%D0%BE%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%3A).
 
