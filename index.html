@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <title>Конвертер брайлевских кодировок</title>
+    <meta charset="utf-8">
+    <script src="./convert.min.js"></script>
+  </head>
+
+  <body>
+    <main id="main">
+      <h1>Конвертер брайлевских кодировок</h1>
+
+      <p>С помощью данного сервиса вы сможете преобразовать подготовленный к печати по Брайлю файл из одной брайлевской кодировки в другую. Брайлевская кодировка — это набор символов, который используется для электронного представления точек Брайля. Исторически сложилось так, что разные страны и даже разные брайлевские издательства внутри одной страны используют разные наборы символов при подготовке электронных брайлевских макетов. Во многом это обусловлено используемым оборудованием, а также особенностями алфавита. Этот сервис призван решить проблему несовместимости брайлевских кодировок, когда необходимо распечатать файл, подготовленный для оборудования одного издательства, на оборудовании другого, либо прочитать этот файл с помощью дисплея Брайля.</p>
+
+      <form name="args" action="" role="form" onsubmit="event.preventDefault(); generate(this.inFormat.value, this.outFormat.value, this.inText.files[0])">
+        <p>
+          <label for="inFormat">Исходный формат:</label>
+          <select name="inFormat" id="inFormat">
+            <option value="unicode">Braille Unicode</option>
+            <option value="brf">BRF (Braille ASCII)</option>
+            <option value="chtenie">ИПО "Чтение" ВОС</option>
+            <option value="logos">ИПТК "Логосвос"</option>
+            <option value="gost">ГОСТ Р 58511-2019</option>
+          </select>
+        </p>
+        <p>Файл для конвертации:
+          <input type="file" name="inText" required />
+        </p>
+        <p>
+          <label for="outFormat">Выходной формат:</label>
+          <select name="outFormat" id="outFormat">
+            <option value="unicode">Braille Unicode</option>
+            <option value="brf">BRF (Braille ASCII)</option>
+            <option value="chtenie">ИПО "Чтение" ВОС</option>
+            <option value="logos">ИПТК "Логосвос"</option>
+            <option value="gost">ГОСТ Р 58511-2019</option>
+          </select>
+        </p>
+        <p>
+          <input type="submit" value="Конвертировать" />
+        </p>
+      </form>
+
+      <div id="status" style="display: none;" tabindex="-1"></div>
+
+    </main>
+
+    <footer>
+      <p>© Андрей Якубой, 2022.</p>
+      <p>При поддержке Всероссийского сообщества сторонников рельефно-точечного шрифта Брайля «<a href="https://brl-aktiv.ru">Брайль-Актив</a>»</p>
+      <p>По всем вопросам: <a href="mailto:braille@yakuboy.ru">braille@yakuboy.ru</a>.</p>
+      <a href="https://github.com/Futyn-Maker/brlc-converter">Исходный код на GitHub</a>
+    </footer>
+
+    <script>
+      function generate(inFormat, outFormat, inText) {
+          let xhr = new XMLHttpRequest();
+          let inMap = inFormat;
+          if (inMap != "unicode") {
+              xhr.open("GET", `./data/${inFormat}.json`, false);
+              xhr.send();
+              inMap = JSON.parse(xhr.responseText);
+          }
+          let outMap = outFormat;
+          if (outMap != "unicode") {
+              xhr.open("GET", `./data/${outFormat}.json`, false);
+              xhr.send();
+              outMap = JSON.parse(xhr.responseText);
+          }
+          let reader = new FileReader();
+          reader.readAsBinaryString(inText); // For some reason, Jschardet detects the encoding wrong if ArrayBuffer is given instead of a string
+          reader.onload = function() {
+              let outText = convert(inMap, outMap, reader.result);
+              let fileName = inText.name.replace(/\.\w+$/, "");
+              if (outFormat == "unicode") {
+                  fileName += ".txt";
+              } else {
+                  fileName += `.${outMap.format}`;
+              }
+              let link = document.createElement("a");
+              link.download = fileName;
+              link.href = URL.createObjectURL(new Blob([outText.buffer]));
+              link.textContent = "Скачать файл";
+              document.getElementById("main").appendChild(link);
+          }
+          let status = document.getElementById('status');
+          status.removeAttribute('style');
+          status.innerHTML = "Конвертация завершена. Нажмите на ссылку ниже, чтобы скачать файл.";
+          status.focus();
+      }
+    </script>
+
+  </body>
+</html>

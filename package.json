@@ -1,0 +1,26 @@
+{
+  "name": "brlc-converter",
+  "description": "Converts braille files between different braille encodings",
+  "version": "2022.07.21",
+  "author": "Andrey Yakuboy <braille@yakuboy.ru",
+  "homepage": "https://github.com/Futyn-Maker/brlc-converter",
+  "bugs": {
+    "url": "https://github.com/Futyn-Maker/brlc-converter/issues",
+    "email": "braille@yakuboy.ru"
+  },
+  "repository": "github:Futyn-Maker/brlc-converter",
+  "main": "brlc-converter.js",
+  "dependencies": {
+    "commander": "^9.4.0",
+    "iconv-lite": "^0.6.3",
+    "jschardet": "^3.0.0"
+  },
+  "bin": {
+    "brlc-converter": "brlc-converter.js"
+  },
+  "pkg": {
+    "targets": ["host"],
+    "outputPath": "dist",
+    "compress": "GZip"
+  }
+}
