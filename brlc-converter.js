@@ -1,6 +1,7 @@
 const {program} = require("commander");
 const {name, description, version} = require("./package.json");
 const fs = require("fs");
+const path = require("path");
 const convert = require("./convert");
 
 program
@@ -13,15 +14,16 @@ program
     .option("-o, --output <file>", "Path to the output file")
     .showHelpAfterError();
 const args = program.parse().opts()
+const dataPath = path.dirname(process.execPath);
 
 let inFormat = args.from;
 if (inFormat != "unicode") {
-    inFormat = require(`${process.cwd()}/data/${inFormat}.json`);
+    inFormat = require(path.join(dataPath, "data", `${inFormat}.json`));
 }
 
 let outFormat = args.to;
 if (outFormat != "unicode") {
-    outFormat = require(`${process.cwd()}/data/${outFormat}.json`);
+    outFormat = require(path.join(dataPath, "data", `${outFormat}.json`));
 }
 
 let inText = fs.readFileSync(args.input);
