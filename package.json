@@ -1,7 +1,7 @@
 {
   "name": "brlc-converter",
   "description": "Converts braille files between different braille encodings",
-  "version": "2025.11.03",
+  "version": "2025.11.08",
   "author": "Andrey Yakuboy <braille@yakuboy.ru>",
   "homepage": "https://github.com/Futyn-Maker/brlc-converter",
   "bugs": {
