@@ -1933,742 +1933,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":1,"buffer":3,"ieee754":4}],4:[function(require,module,exports){
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = ((value * c) - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-},{}],5:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],6:[function(require,module,exports){
-/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
-/* eslint-disable node/no-deprecated-api */
-var buffer = require('buffer')
-var Buffer = buffer.Buffer
-
-// alternative to using Object.keys for old browsers
-function copyProps (src, dst) {
-  for (var key in src) {
-    dst[key] = src[key]
-  }
-}
-if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-  module.exports = buffer
-} else {
-  // Copy properties from require('buffer')
-  copyProps(buffer, exports)
-  exports.Buffer = SafeBuffer
-}
-
-function SafeBuffer (arg, encodingOrOffset, length) {
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-SafeBuffer.prototype = Object.create(Buffer.prototype)
-
-// Copy static methods from Buffer
-copyProps(Buffer, SafeBuffer)
-
-SafeBuffer.from = function (arg, encodingOrOffset, length) {
-  if (typeof arg === 'number') {
-    throw new TypeError('Argument must not be a number')
-  }
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-SafeBuffer.alloc = function (size, fill, encoding) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  var buf = Buffer(size)
-  if (fill !== undefined) {
-    if (typeof encoding === 'string') {
-      buf.fill(fill, encoding)
-    } else {
-      buf.fill(fill)
-    }
-  } else {
-    buf.fill(0)
-  }
-  return buf
-}
-
-SafeBuffer.allocUnsafe = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return Buffer(size)
-}
-
-SafeBuffer.allocUnsafeSlow = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return buffer.SlowBuffer(size)
-}
-
-},{"buffer":3}],7:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-/*<replacement>*/
-
-var Buffer = require('safe-buffer').Buffer;
-/*</replacement>*/
-
-var isEncoding = Buffer.isEncoding || function (encoding) {
-  encoding = '' + encoding;
-  switch (encoding && encoding.toLowerCase()) {
-    case 'hex':case 'utf8':case 'utf-8':case 'ascii':case 'binary':case 'base64':case 'ucs2':case 'ucs-2':case 'utf16le':case 'utf-16le':case 'raw':
-      return true;
-    default:
-      return false;
-  }
-};
-
-function _normalizeEncoding(enc) {
-  if (!enc) return 'utf8';
-  var retried;
-  while (true) {
-    switch (enc) {
-      case 'utf8':
-      case 'utf-8':
-        return 'utf8';
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return 'utf16le';
-      case 'latin1':
-      case 'binary':
-        return 'latin1';
-      case 'base64':
-      case 'ascii':
-      case 'hex':
-        return enc;
-      default:
-        if (retried) return; // undefined
-        enc = ('' + enc).toLowerCase();
-        retried = true;
-    }
-  }
-};
-
-// Do not cache `Buffer.isEncoding` when checking encoding names as some
-// modules monkey-patch it to support additional encodings
-function normalizeEncoding(enc) {
-  var nenc = _normalizeEncoding(enc);
-  if (typeof nenc !== 'string' && (Buffer.isEncoding === isEncoding || !isEncoding(enc))) throw new Error('Unknown encoding: ' + enc);
-  return nenc || enc;
-}
-
-// StringDecoder provides an interface for efficiently splitting a series of
-// buffers into a series of JS strings without breaking apart multi-byte
-// characters.
-exports.StringDecoder = StringDecoder;
-function StringDecoder(encoding) {
-  this.encoding = normalizeEncoding(encoding);
-  var nb;
-  switch (this.encoding) {
-    case 'utf16le':
-      this.text = utf16Text;
-      this.end = utf16End;
-      nb = 4;
-      break;
-    case 'utf8':
-      this.fillLast = utf8FillLast;
-      nb = 4;
-      break;
-    case 'base64':
-      this.text = base64Text;
-      this.end = base64End;
-      nb = 3;
-      break;
-    default:
-      this.write = simpleWrite;
-      this.end = simpleEnd;
-      return;
-  }
-  this.lastNeed = 0;
-  this.lastTotal = 0;
-  this.lastChar = Buffer.allocUnsafe(nb);
-}
-
-StringDecoder.prototype.write = function (buf) {
-  if (buf.length === 0) return '';
-  var r;
-  var i;
-  if (this.lastNeed) {
-    r = this.fillLast(buf);
-    if (r === undefined) return '';
-    i = this.lastNeed;
-    this.lastNeed = 0;
-  } else {
-    i = 0;
-  }
-  if (i < buf.length) return r ? r + this.text(buf, i) : this.text(buf, i);
-  return r || '';
-};
-
-StringDecoder.prototype.end = utf8End;
-
-// Returns only complete characters in a Buffer
-StringDecoder.prototype.text = utf8Text;
-
-// Attempts to complete a partial non-UTF-8 character using bytes from a Buffer
-StringDecoder.prototype.fillLast = function (buf) {
-  if (this.lastNeed <= buf.length) {
-    buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, this.lastNeed);
-    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
-  }
-  buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, buf.length);
-  this.lastNeed -= buf.length;
-};
-
-// Checks the type of a UTF-8 byte, whether it's ASCII, a leading byte, or a
-// continuation byte. If an invalid byte is detected, -2 is returned.
-function utf8CheckByte(byte) {
-  if (byte <= 0x7F) return 0;else if (byte >> 5 === 0x06) return 2;else if (byte >> 4 === 0x0E) return 3;else if (byte >> 3 === 0x1E) return 4;
-  return byte >> 6 === 0x02 ? -1 : -2;
-}
-
-// Checks at most 3 bytes at the end of a Buffer in order to detect an
-// incomplete multi-byte UTF-8 character. The total number of bytes (2, 3, or 4)
-// needed to complete the UTF-8 character (if applicable) are returned.
-function utf8CheckIncomplete(self, buf, i) {
-  var j = buf.length - 1;
-  if (j < i) return 0;
-  var nb = utf8CheckByte(buf[j]);
-  if (nb >= 0) {
-    if (nb > 0) self.lastNeed = nb - 1;
-    return nb;
-  }
-  if (--j < i || nb === -2) return 0;
-  nb = utf8CheckByte(buf[j]);
-  if (nb >= 0) {
-    if (nb > 0) self.lastNeed = nb - 2;
-    return nb;
-  }
-  if (--j < i || nb === -2) return 0;
-  nb = utf8CheckByte(buf[j]);
-  if (nb >= 0) {
-    if (nb > 0) {
-      if (nb === 2) nb = 0;else self.lastNeed = nb - 3;
-    }
-    return nb;
-  }
-  return 0;
-}
-
-// Validates as many continuation bytes for a multi-byte UTF-8 character as
-// needed or are available. If we see a non-continuation byte where we expect
-// one, we "replace" the validated continuation bytes we've seen so far with
-// a single UTF-8 replacement character ('\ufffd'), to match v8's UTF-8 decoding
-// behavior. The continuation byte check is included three times in the case
-// where all of the continuation bytes for a character exist in the same buffer.
-// It is also done this way as a slight performance increase instead of using a
-// loop.
-function utf8CheckExtraBytes(self, buf, p) {
-  if ((buf[0] & 0xC0) !== 0x80) {
-    self.lastNeed = 0;
-    return '\ufffd';
-  }
-  if (self.lastNeed > 1 && buf.length > 1) {
-    if ((buf[1] & 0xC0) !== 0x80) {
-      self.lastNeed = 1;
-      return '\ufffd';
-    }
-    if (self.lastNeed > 2 && buf.length > 2) {
-      if ((buf[2] & 0xC0) !== 0x80) {
-        self.lastNeed = 2;
-        return '\ufffd';
-      }
-    }
-  }
-}
-
-// Attempts to complete a multi-byte UTF-8 character using bytes from a Buffer.
-function utf8FillLast(buf) {
-  var p = this.lastTotal - this.lastNeed;
-  var r = utf8CheckExtraBytes(this, buf, p);
-  if (r !== undefined) return r;
-  if (this.lastNeed <= buf.length) {
-    buf.copy(this.lastChar, p, 0, this.lastNeed);
-    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
-  }
-  buf.copy(this.lastChar, p, 0, buf.length);
-  this.lastNeed -= buf.length;
-}
-
-// Returns all complete UTF-8 characters in a Buffer. If the Buffer ended on a
-// partial character, the character's bytes are buffered until the required
-// number of bytes are available.
-function utf8Text(buf, i) {
-  var total = utf8CheckIncomplete(this, buf, i);
-  if (!this.lastNeed) return buf.toString('utf8', i);
-  this.lastTotal = total;
-  var end = buf.length - (total - this.lastNeed);
-  buf.copy(this.lastChar, 0, end);
-  return buf.toString('utf8', i, end);
-}
-
-// For UTF-8, a replacement character is added when ending on a partial
-// character.
-function utf8End(buf) {
-  var r = buf && buf.length ? this.write(buf) : '';
-  if (this.lastNeed) return r + '\ufffd';
-  return r;
-}
-
-// UTF-16LE typically needs two bytes per character, but even if we have an even
-// number of bytes available, we need to check if we end on a leading/high
-// surrogate. In that case, we need to wait for the next two bytes in order to
-// decode the last character properly.
-function utf16Text(buf, i) {
-  if ((buf.length - i) % 2 === 0) {
-    var r = buf.toString('utf16le', i);
-    if (r) {
-      var c = r.charCodeAt(r.length - 1);
-      if (c >= 0xD800 && c <= 0xDBFF) {
-        this.lastNeed = 2;
-        this.lastTotal = 4;
-        this.lastChar[0] = buf[buf.length - 2];
-        this.lastChar[1] = buf[buf.length - 1];
-        return r.slice(0, -1);
-      }
-    }
-    return r;
-  }
-  this.lastNeed = 1;
-  this.lastTotal = 2;
-  this.lastChar[0] = buf[buf.length - 1];
-  return buf.toString('utf16le', i, buf.length - 1);
-}
-
-// For UTF-16LE we do not explicitly append special replacement characters if we
-// end on a partial character, we simply let v8 handle that.
-function utf16End(buf) {
-  var r = buf && buf.length ? this.write(buf) : '';
-  if (this.lastNeed) {
-    var end = this.lastTotal - this.lastNeed;
-    return r + this.lastChar.toString('utf16le', 0, end);
-  }
-  return r;
-}
-
-function base64Text(buf, i) {
-  var n = (buf.length - i) % 3;
-  if (n === 0) return buf.toString('base64', i);
-  this.lastNeed = 3 - n;
-  this.lastTotal = 3;
-  if (n === 1) {
-    this.lastChar[0] = buf[buf.length - 1];
-  } else {
-    this.lastChar[0] = buf[buf.length - 2];
-    this.lastChar[1] = buf[buf.length - 1];
-  }
-  return buf.toString('base64', i, buf.length - n);
-}
-
-function base64End(buf) {
-  var r = buf && buf.length ? this.write(buf) : '';
-  if (this.lastNeed) return r + this.lastChar.toString('base64', 0, 3 - this.lastNeed);
-  return r;
-}
-
-// Pass bytes on through for single-byte encodings (e.g. ascii, latin1, hex)
-function simpleWrite(buf) {
-  return buf.toString(this.encoding);
-}
-
-function simpleEnd(buf) {
-  return buf && buf.length ? this.write(buf) : '';
-}
-},{"safe-buffer":6}],8:[function(require,module,exports){
-const jschardet = require("jschardet");
-const iconv = require("iconv-lite");
-iconv.skipDecodeWarning = true; // This is because we have to use decoding from a binary string in the browser version
-
-function convert(inMap, outMap, inText) {
-    let encoding = jschardet.detect(inText).encoding;
-    inText = iconv.decode(inText, encoding);
-
-    let outText = inText;
-
-    if (inMap == "unicode" && outMap == "unicode") {
-        outText = clearUnicode(outText);
-        encoding = "utf-8";
-    } else if (inMap == "unicode") {
-        outText = clearUnicode(outText);
-        outText = fromUnicode(outMap.characters, outText);
-        encoding = outMap.encoding;
-    } else if (outMap == "unicode") {
-        outText = toUnicode(inMap.characters, outText);
-        outText = clearUnicode(outText);
-        encoding = "utf-8";
-    } else {
-        outText = toUnicode(inMap.characters, outText);
-        outText = fromUnicode(outMap.characters, outText, false);
-        encoding = outMap.encoding;
-    }
-
-    outText = iconv.encode(outText, encoding);
-    return outText;
-}
-
-function toUnicode(inTable, inText) {
-    let outText = inText;
-    // At first, we need to replace letters A-Z, as they're used as a virtual braille dots
-    for (let char of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-        if (char in inTable) {
-            outText = outText.replaceAll(char, inTable[char]);
-            delete inTable[char];
-        }
-    }
-    // Now we can replace other characters
-    for (let char in inTable) {
-        if (inTable[char].length == 1 && inTable[char].charCodeAt(0) <= 10303) { // Check if the character doesn't correspond to a virtual dot or a dot with lowered dots (7 and 8)
-            outText = outText.replaceAll(char, inTable[char] + "0");
-        } else {
-            outText = outText.replaceAll(char, inTable[char]);
-        }
-    }
-    return outText;
-}
-
-function fromUnicode(outTable, inText, isClean=true) {
-    let outText = inText;
-    if (isClean) {
-        for (let char in outTable) {
-            outText = outText.replaceAll(outTable[char], char);
-        }
-    } else {
-        let chars = outText.match(/[\u2801-\u28FF][0A-Z]?/g); // Get all braille characters, both with virtual dots and without
-        chars = Array.from(new Set(chars));
-        for (let char of chars) {
-            if (char[1] == "0") {
-                outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(char[0])]);
-            } else {
-                if (Object.values(outTable).includes(char)) {
-                    outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(char)]);
-                } else {
-                    outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(clearUnicode(char))]);
-                }
-            }
-        }
-    }
-    return outText;
-}
-
-function clearUnicode(inText) {
-    let outText = inText;
-    outText = outText.replaceAll("\u2800", " "); // Replace Braille pattern blank with ASCII space
-    outText = outText.replaceAll(/[0A-Z]/g, ""); // Remove virtual dots
-    // Replace characters containing lowered dots with corresponding characters without them
-    let loweredDots = outText.match(/[\u2840-\u28FF]/g);
-    loweredDots = Array.from(new Set(loweredDots));
-    for (let char of loweredDots) {
-        let number = char.charCodeAt(0) - 10240;
-        if (number < 128) {
-            outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 64));
-        } else if (number < 192) {
-            outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 128));
-        } else {
-            outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 192));
-        }
-    }
-    return outText;
-}
-
-module.exports = convert;
-
-},{"iconv-lite":28,"jschardet":30}],9:[function(require,module,exports){
+},{"base64-js":1,"buffer":3,"ieee754":25}],4:[function(require,module,exports){
 "use strict";
 var Buffer = require("safer-buffer").Buffer;
 
@@ -3267,7 +2532,7 @@ function findIdx(table, val) {
 }
 
 
-},{"safer-buffer":73}],10:[function(require,module,exports){
+},{"safer-buffer":71}],5:[function(require,module,exports){
 "use strict";
 
 // Description of supported double byte encodings and aliases.
@@ -3457,7 +2722,7 @@ module.exports = {
     'xxbig5': 'big5hkscs',
 };
 
-},{"./tables/big5-added.json":16,"./tables/cp936.json":17,"./tables/cp949.json":18,"./tables/cp950.json":19,"./tables/eucjp.json":20,"./tables/gb18030-ranges.json":21,"./tables/gbk-added.json":22,"./tables/shiftjis.json":23}],11:[function(require,module,exports){
+},{"./tables/big5-added.json":11,"./tables/cp936.json":12,"./tables/cp949.json":13,"./tables/cp950.json":14,"./tables/eucjp.json":15,"./tables/gb18030-ranges.json":16,"./tables/gbk-added.json":17,"./tables/shiftjis.json":18}],6:[function(require,module,exports){
 "use strict";
 
 // Update this array if you add/rename/remove files in this directory.
@@ -3482,7 +2747,7 @@ for (var i = 0; i < modules.length; i++) {
             exports[enc] = module[enc];
 }
 
-},{"./dbcs-codec":9,"./dbcs-data":10,"./internal":12,"./sbcs-codec":13,"./sbcs-data":15,"./sbcs-data-generated":14,"./utf16":24,"./utf32":25,"./utf7":26}],12:[function(require,module,exports){
+},{"./dbcs-codec":4,"./dbcs-data":5,"./internal":7,"./sbcs-codec":8,"./sbcs-data":10,"./sbcs-data-generated":9,"./utf16":19,"./utf32":20,"./utf7":21}],7:[function(require,module,exports){
 "use strict";
 var Buffer = require("safer-buffer").Buffer;
 
@@ -3682,7 +2947,7 @@ InternalDecoderCesu8.prototype.end = function() {
     return res;
 }
 
-},{"safer-buffer":73,"string_decoder":7}],13:[function(require,module,exports){
+},{"safer-buffer":71,"string_decoder":72}],8:[function(require,module,exports){
 "use strict";
 var Buffer = require("safer-buffer").Buffer;
 
@@ -3756,7 +3021,7 @@ SBCSDecoder.prototype.write = function(buf) {
 SBCSDecoder.prototype.end = function() {
 }
 
-},{"safer-buffer":73}],14:[function(require,module,exports){
+},{"safer-buffer":71}],9:[function(require,module,exports){
 "use strict";
 
 // Generated data for sbcs codec. Don't edit manually. Regenerate using generation/gen-sbcs.js script.
@@ -4208,7 +3473,7 @@ module.exports = {
     "chars": "���������������������������������กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรฤลฦวศษสหฬอฮฯะัาำิีึืฺุู����฿เแโใไๅๆ็่้๊๋์ํ๎๏๐๑๒๓๔๕๖๗๘๙๚๛����"
   }
 }
-},{}],15:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 // Manually added data to be used by sbcs codec in addition to generated one.
@@ -4389,7 +3654,7 @@ module.exports = {
 };
 
 
-},{}],16:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports=[
 ["8740","䏰䰲䘃䖦䕸𧉧䵷䖳𧲱䳢𧳅㮕䜶䝄䱇䱀𤊿𣘗𧍒𦺋𧃒䱗𪍑䝏䗚䲅𧱬䴇䪤䚡𦬣爥𥩔𡩣𣸆𣽡晍囻"],
 ["8767","綕夝𨮹㷴霴𧯯寛𡵞媤㘥𩺰嫑宷峼杮薓𩥅瑡璝㡵𡵓𣚞𦀡㻬"],
@@ -4513,7 +3778,7 @@ module.exports=[
 ["fea1","𤅟𤩹𨮏孆𨰃𡢞瓈𡦈甎瓩甞𨻙𡩋寗𨺬鎅畍畊畧畮𤾂㼄𤴓疎瑝疞疴瘂瘬癑癏癯癶𦏵皐臯㟸𦤑𦤎皡皥皷盌𦾟葢𥂝𥅽𡸜眞眦着撯𥈠睘𣊬瞯𨥤𨥨𡛁矴砉𡍶𤨒棊碯磇磓隥礮𥗠磗礴碱𧘌辸袄𨬫𦂃𢘜禆褀椂禀𥡗禝𧬹礼禩渪𧄦㺨秆𩄍秔"]
 ]
 
-},{}],17:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127,"€"],
 ["8140","丂丄丅丆丏丒丗丟丠両丣並丩丮丯丱丳丵丷丼乀乁乂乄乆乊乑乕乗乚乛乢乣乤乥乧乨乪",5,"乲乴",9,"乿",6,"亇亊"],
@@ -4779,7 +4044,7 @@ module.exports=[
 ["fe40","兀嗀﨎﨏﨑﨓﨔礼﨟蘒﨡﨣﨤﨧﨨﨩"]
 ]
 
-},{}],18:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["8141","갂갃갅갆갋",4,"갘갞갟갡갢갣갥",6,"갮갲갳갴"],
@@ -5054,7 +4319,7 @@ module.exports=[
 ["fda1","爻肴酵驍侯候厚后吼喉嗅帿後朽煦珝逅勛勳塤壎焄熏燻薰訓暈薨喧暄煊萱卉喙毁彙徽揮暉煇諱輝麾休携烋畦虧恤譎鷸兇凶匈洶胸黑昕欣炘痕吃屹紇訖欠欽歆吸恰洽翕興僖凞喜噫囍姬嬉希憙憘戱晞曦熙熹熺犧禧稀羲詰"]
 ]
 
-},{}],19:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["a140","　，、。．‧；：？！︰…‥﹐﹑﹒·﹔﹕﹖﹗｜–︱—︳╴︴﹏（）︵︶｛｝︷︸〔〕︹︺【】︻︼《》︽︾〈〉︿﹀「」﹁﹂『』﹃﹄﹙﹚"],
@@ -5233,7 +4498,7 @@ module.exports=[
 ["f9a1","龤灨灥糷虪蠾蠽蠿讞貜躩軉靋顳顴飌饡馫驤驦驧鬤鸕鸗齈戇欞爧虌躨钂钀钁驩驨鬮鸙爩虋讟钃鱹麷癵驫鱺鸝灩灪麤齾齉龘碁銹裏墻恒粧嫺╔╦╗╠╬╣╚╩╝╒╤╕╞╪╡╘╧╛╓╥╖╟╫╢╙╨╜║═╭╮╰╯▓"]
 ]
 
-},{}],20:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["8ea1","｡",62],
@@ -5417,9 +4682,9 @@ module.exports=[
 ["8feda1","黸黿鼂鼃鼉鼏鼐鼑鼒鼔鼖鼗鼙鼚鼛鼟鼢鼦鼪鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃",4,"齓齕齖齗齘齚齝齞齨齩齭",4,"齳齵齺齽龏龐龑龒龔龖龗龞龡龢龣龥"]
 ]
 
-},{}],21:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports={"uChars":[128,165,169,178,184,216,226,235,238,244,248,251,253,258,276,284,300,325,329,334,364,463,465,467,469,471,473,475,477,506,594,610,712,716,730,930,938,962,970,1026,1104,1106,8209,8215,8218,8222,8231,8241,8244,8246,8252,8365,8452,8454,8458,8471,8482,8556,8570,8596,8602,8713,8720,8722,8726,8731,8737,8740,8742,8748,8751,8760,8766,8777,8781,8787,8802,8808,8816,8854,8858,8870,8896,8979,9322,9372,9548,9588,9616,9622,9634,9652,9662,9672,9676,9680,9702,9735,9738,9793,9795,11906,11909,11913,11917,11928,11944,11947,11951,11956,11960,11964,11979,12284,12292,12312,12319,12330,12351,12436,12447,12535,12543,12586,12842,12850,12964,13200,13215,13218,13253,13263,13267,13270,13384,13428,13727,13839,13851,14617,14703,14801,14816,14964,15183,15471,15585,16471,16736,17208,17325,17330,17374,17623,17997,18018,18212,18218,18301,18318,18760,18811,18814,18820,18823,18844,18848,18872,19576,19620,19738,19887,40870,59244,59336,59367,59413,59417,59423,59431,59437,59443,59452,59460,59478,59493,63789,63866,63894,63976,63986,64016,64018,64021,64025,64034,64037,64042,65074,65093,65107,65112,65127,65132,65375,65510,65536],"gbChars":[0,36,38,45,50,81,89,95,96,100,103,104,105,109,126,133,148,172,175,179,208,306,307,308,309,310,311,312,313,341,428,443,544,545,558,741,742,749,750,805,819,820,7922,7924,7925,7927,7934,7943,7944,7945,7950,8062,8148,8149,8152,8164,8174,8236,8240,8262,8264,8374,8380,8381,8384,8388,8390,8392,8393,8394,8396,8401,8406,8416,8419,8424,8437,8439,8445,8482,8485,8496,8521,8603,8936,8946,9046,9050,9063,9066,9076,9092,9100,9108,9111,9113,9131,9162,9164,9218,9219,11329,11331,11334,11336,11346,11361,11363,11366,11370,11372,11375,11389,11682,11686,11687,11692,11694,11714,11716,11723,11725,11730,11736,11982,11989,12102,12336,12348,12350,12384,12393,12395,12397,12510,12553,12851,12962,12973,13738,13823,13919,13933,14080,14298,14585,14698,15583,15847,16318,16434,16438,16481,16729,17102,17122,17315,17320,17402,17418,17859,17909,17911,17915,17916,17936,17939,17961,18664,18703,18814,18962,19043,33469,33470,33471,33484,33485,33490,33497,33501,33505,33513,33520,33536,33550,37845,37921,37948,38029,38038,38064,38065,38066,38069,38075,38076,38078,39108,39109,39113,39114,39115,39116,39265,39394,189000]}
-},{}],22:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports=[
 ["a140","",62],
 ["a180","",32],
@@ -5477,7 +4742,7 @@ module.exports=[
 ["8135f437",""]
 ]
 
-},{}],23:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",128],
 ["a1","｡",62],
@@ -5604,7 +4869,7 @@ module.exports=[
 ["fc40","髜魵魲鮏鮱鮻鰀鵰鵫鶴鸙黑"]
 ]
 
-},{}],24:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 var Buffer = require("safer-buffer").Buffer;
 
@@ -5803,7 +5068,7 @@ function detectEncoding(bufs, defaultEncoding) {
 
 
 
-},{"safer-buffer":73}],25:[function(require,module,exports){
+},{"safer-buffer":71}],20:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('safer-buffer').Buffer;
@@ -6124,7 +5389,7 @@ function detectEncoding(bufs, defaultEncoding) {
     return defaultEncoding || 'utf-32le';
 }
 
-},{"safer-buffer":73}],26:[function(require,module,exports){
+},{"safer-buffer":71}],21:[function(require,module,exports){
 "use strict";
 var Buffer = require("safer-buffer").Buffer;
 
@@ -6416,7 +5681,7 @@ Utf7IMAPDecoder.prototype.end = function() {
 
 
 
-},{"safer-buffer":73}],27:[function(require,module,exports){
+},{"safer-buffer":71}],22:[function(require,module,exports){
 "use strict";
 
 var BOMChar = '\uFEFF';
@@ -6470,7 +5735,7 @@ StripBOMWrapper.prototype.end = function() {
 }
 
 
-},{}],28:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 var Buffer = require("safer-buffer").Buffer;
@@ -6652,7 +5917,7 @@ if ("Ā" != "\u0100") {
     console.error("iconv-lite warning: js files use non-utf8 encoding. See https://github.com/ashtuchkin/iconv-lite/wiki/Javascript-source-file-encodings for more info.");
 }
 
-},{"../encodings":11,"./bom-handling":27,"./streams":29,"safer-buffer":73,"stream":2}],29:[function(require,module,exports){
+},{"../encodings":6,"./bom-handling":22,"./streams":24,"safer-buffer":71,"stream":2}],24:[function(require,module,exports){
 "use strict";
 
 var Buffer = require("safer-buffer").Buffer;
@@ -6763,9 +6028,96 @@ module.exports = function(stream_module) {
     };
 };
 
-},{"safer-buffer":73}],30:[function(require,module,exports){
+},{"safer-buffer":71}],25:[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],26:[function(require,module,exports){
 module.exports = require('./src')
-},{"./src":48}],31:[function(require,module,exports){
+},{"./src":44}],27:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7692,7 +7044,7 @@ exports.Big5CharToFreqOrder = [
 13952,13953,13954,13955,13956,13957,13958,13959,13960,13961,13962,13963,13964,13965,13966,13967, //13968
 13968,13969,13970,13971,13972]; //13973
 
-},{}],32:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -7748,7 +7100,7 @@ Big5Prober.prototype = new MultiByteCharSetProber();
 
 module.exports = Big5Prober
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./mbcharsetprober":59,"./mbcssm/big5":61}],33:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./mbcharsetprober":55,"./mbcssm/big5":57}],29:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8051,7 +7403,7 @@ EUCJPDistributionAnalysis.prototype = new CharDistributionAnalysis();
 
 exports.EUCJPDistributionAnalysis = EUCJPDistributionAnalysis
 
-},{"./big5freq":31,"./euckrfreq":41,"./euctwfreq":43,"./gb2312freq":45,"./jisfreq":49}],34:[function(require,module,exports){
+},{"./big5freq":27,"./euckrfreq":37,"./euctwfreq":39,"./gb2312freq":41,"./jisfreq":45}],30:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8117,6 +7469,10 @@ function CharSetGroupProber() {
         return this._mBestGuessProber.getCharsetName();
     }
 
+    this.getSupportedCharsetNames = function() {
+        throw new Error("Unimplemented method getSupportedCharsetNames()");
+    }
+
     this.feed = function(aBuf) {
         for( var i = 0, prober; prober = this._mProbers[i]; i++ ) {
             if( !prober || !prober.active ) continue;
@@ -8169,7 +7525,7 @@ CharSetGroupProber.prototype = new CharSetProber();
 
 module.exports = CharSetGroupProber
 
-},{"./charsetprober":35,"./constants":37,"./logger":58}],35:[function(require,module,exports){
+},{"./charsetprober":31,"./constants":33,"./logger":54}],31:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8210,6 +7566,10 @@ function CharSetProber() {
         return null;
     }
 
+    this.getSupportedCharsetNames = function() {
+      throw new Error("Unimplemented method getSupportedCharsetNames()");
+    }
+
     this.feed = function(aBuf) {
     }
 
@@ -8231,34 +7591,29 @@ function CharSetProber() {
         return aBuf;
     }
 
-    // Input: aBuf is a string containing all different types of characters
-    // Output: a string that contains all alphabetic letters, high-byte characters, and word immediately preceding `>`, but nothing else within `<>`
-    // Ex: input - '¡£º <div blah blah> abcdef</div> apples! * and oranges 9jd93jd>'
-    //     output - '¡£º blah div apples and oranges jd jd '
-    this.filterWithEnglishLetters = function(aBuf) {
+    // Returns a copy of aBuf that retains only the sequences of English
+    // alphabet and high byte characters that are not between <> characters.
+    // The exception are PHP tags which start with '<?' and end with '?>'.
+    // This filter can be applied to all scripts which contain both English
+    // characters and extended ASCII characters, but is currently only used by
+    // Latin1Prober.
+    this.removeXmlTags = function(aBuf) {
         var result = '';
         var inTag = false;
         var prev = 0;
 
         for (var curr = 0; curr < aBuf.length; curr++) {
-          var c = aBuf[curr];
+            var c = aBuf[curr];
 
-          if (c == '>') {
-            inTag = false;
-          } else if (c == '<') {
-            inTag = true;
-          }
-
-          var isAlpha = /[a-zA-Z]/.test(c);
-          var isASCII = /^[\x00-\x7F]*$/.test(c);
-
-          if (isASCII && !isAlpha) {
-            if (curr > prev && !inTag) {
-              result = result + aBuf.substring(prev, curr) + ' ';
+            if (c == '>' && aBuf[curr-1] !== '?') {
+                prev = curr + 1
+                inTag = false;
+            } else if (c == '<' && aBuf[curr+1] !== '?') {
+                if (curr > prev && !inTag) {
+                    result = result + aBuf.substring(prev, curr) + ' ';
+                }
+                inTag = true;
             }
-
-            prev = curr + 1;
-          }
         }
 
         if (!inTag) {
@@ -8271,7 +7626,7 @@ function CharSetProber() {
 
 module.exports = CharSetProber
 
-},{"./constants":37}],36:[function(require,module,exports){
+},{"./constants":33}],32:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8344,7 +7699,7 @@ function CodingStateMachine(sm) {
 
 module.exports = CodingStateMachine
 
-},{"./constants":37}],37:[function(require,module,exports){
+},{"./constants":33}],33:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8386,7 +7741,7 @@ module.exports = {
     SHORTCUT_THRESHOLD  : 0.95
 };
 
-},{}],38:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8433,6 +7788,10 @@ function EscCharSetProber() {
             new CodingStateMachine(escsm.ISO2022JPSMModel),
             new CodingStateMachine(escsm.ISO2022KRSMModel)
         ];
+        self._supportedCharsetNames = [];
+        for (const codingSM of self._mCodingSM) {
+            self._supportedCharsetNames.push(codingSM.getCodingStateMachine());
+        }
         self.reset();
     }
 
@@ -8449,6 +7808,10 @@ function EscCharSetProber() {
 
     this.getCharsetName = function() {
         return this._mDetectedCharset;
+    }
+
+    this.getSupportedCharsetNames = function() {
+        return self._supportedCharsetNames;
     }
 
     this.getConfidence = function() {
@@ -8489,7 +7852,7 @@ EscCharSetProber.prototype = new CharSetProber();
 
 module.exports = EscCharSetProber
 
-},{"./charsetprober":35,"./codingstatemachine":36,"./constants":37,"./escsm":39}],39:[function(require,module,exports){
+},{"./charsetprober":31,"./codingstatemachine":32,"./constants":33,"./escsm":35}],35:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8741,7 +8104,7 @@ exports.ISO2022KRSMModel = {
     "name"          : "ISO-2022-KR"
 };
 
-},{"./constants":37}],40:[function(require,module,exports){
+},{"./constants":33}],36:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -8815,8 +8178,9 @@ function EUCJPProber() {
                 var charLen = this._mCodingSM.getCurrentCharLen();
                 if( i == 0 ) {
                     this._mLastChar[1] = aBuf[0];
-                    this._mContextAnalyzer.feed(this._mLastChar, charLen);
-                    this._mDistributionAnalyzer.feed(this._mLastChar, charLen);
+                    var lastCharStr = this._mLastChar.join('');
+                    this._mContextAnalyzer.feed(lastCharStr, charLen);
+                    this._mDistributionAnalyzer.feed(lastCharStr, charLen);
                 } else {
                     this._mContextAnalyzer.feed(aBuf.slice(i-1,i+1), charLen);
                     this._mDistributionAnalyzer.feed(aBuf.slice(i-1,i+1), charLen);
@@ -8849,7 +8213,7 @@ EUCJPProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCJPProber
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./constants":37,"./jpcntx":50,"./logger":58,"./mbcharsetprober":59,"./mbcssm/eucjp":62}],41:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./constants":33,"./jpcntx":46,"./logger":54,"./mbcharsetprober":55,"./mbcssm/eucjp":58}],37:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -9448,7 +8812,7 @@ exports.EUCKRCharToFreqOrder = [
 8736,8737,8738,8739,8740,8741
 ];
 
-},{}],42:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -9504,7 +8868,7 @@ EUCKRProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCKRProber;
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./mbcharsetprober":59,"./mbcssm/euckr":63}],43:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./mbcharsetprober":55,"./mbcssm/euckr":59}],39:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -9935,7 +9299,7 @@ exports.EUCTWCharToFreqOrder = [
 8726,8727,8728,8729,8730,8731,8732,8733,8734,8735,8736,8737,8738,8739,8740,8741
 ]; // 8742
 
-},{}],44:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -9991,7 +9355,7 @@ EUCTWProber.prototype = new MultiByteCharSetProber();
 
 module.exports = EUCTWProber
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./mbcharsetprober":59,"./mbcssm/euctw":64}],45:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./mbcharsetprober":55,"./mbcssm/euctw":60}],41:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -10466,7 +9830,7 @@ exports.GB2312CharToFreqOrder = [
 4866,4899,6099,6100,5559,6478,6765,3599,5868,6101,5869,5870,6275,6766,4527,6767
 ];
 
-},{}],46:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -10522,7 +9886,7 @@ GB2312Prober.prototype = new MultiByteCharSetProber();
 
 module.exports = GB2312Prober
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./mbcharsetprober":59,"./mbcssm/gb2312":65}],47:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./mbcharsetprober":55,"./mbcssm/gb2312":61}],43:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -10847,7 +10211,7 @@ HebrewProber.prototype = new CharSetProber();
 
 module.exports = HebrewProber
 
-},{"./charsetprober":35,"./constants":37}],48:[function(require,module,exports){
+},{"./charsetprober":31,"./constants":33}],44:[function(require,module,exports){
 (function (Buffer){(function (){
 /*
  * The Original Code is Mozilla Universal charset detector code.
@@ -10906,7 +10270,7 @@ function runUniversalDetector(buffer, options) {
     return u;
 }
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./logger":58,"./universaldetector":71,"buffer":3}],49:[function(require,module,exports){
+},{"./logger":54,"./universaldetector":67,"buffer":3}],45:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -11477,7 +10841,7 @@ exports.JISCharToFreqOrder = [
 8256,8257,8258,8259,8260,8261,8262,8263,8264,8265,8266,8267,8268,8269,8270,8271 // 8272
 ];
 
-},{}],50:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -11721,7 +11085,7 @@ EUCJPContextAnalysis.prototype = new JapaneseContextAnalysis();
 
 exports.EUCJPContextAnalysis = EUCJPContextAnalysis
 
-},{}],51:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -11951,7 +11315,7 @@ exports.Win1251BulgarianModel = {
     "charsetName"           : "windows-1251"
 };
 
-},{}],52:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -12282,7 +11646,7 @@ exports.Ibm855Model = {
     "charsetName"             : "IBM855"
 };
 
-},{}],53:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -12509,7 +11873,7 @@ exports.Win1253GreekModel = {
     "charsetName"           : "windows-1253"
 };
 
-},{}],54:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -12710,7 +12074,7 @@ exports.Win1255HebrewModel = {
     "charsetName"           : "windows-1255"
 };
 
-},{}],55:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -12937,7 +12301,7 @@ exports.Win1250HungarianModel = {
     "charsetName"           : "windows-1250"
 };
 
-},{}],56:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -13139,7 +12503,7 @@ exports.TIS620ThaiModel = {
     "charsetName"           : "TIS-620"
 };
 
-},{}],57:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -13254,8 +12618,12 @@ function Latin1Prober() {
         return "windows-1252";
     }
 
-    this.feed = function(aBuf) {
-        aBuf = this.filterWithEnglishLetters(aBuf);
+    this.getSupportedCharsetNames = function() {
+        return [this.getCharsetName()];
+    }
+
+    this.feed = function (aBuf) {
+        aBuf = this.removeXmlTags(aBuf);
         for( var i = 0; i < aBuf.length; i++ ) {
             var c = aBuf.charCodeAt(i);
             var charClass = Latin1_CharToClass[c];
@@ -13273,7 +12641,6 @@ function Latin1Prober() {
 
     this.getConfidence = function() {
         var confidence;
-        var constants;
 
         if( this.getState() == Constants.notMe ) {
             return 0.01;
@@ -13284,7 +12651,7 @@ function Latin1Prober() {
             total += this._mFreqCounter[i];
         }
         if( total < 0.01 ) {
-            constants = 0.0;
+            confidence = 0.0;
         } else {
             confidence = (this._mFreqCounter[3] / total) - (this._mFreqCounter[1] * 20 / total);
         }
@@ -13305,7 +12672,7 @@ Latin1Prober.prototype = new CharSetProber();
 
 module.exports = Latin1Prober
 
-},{"./charsetprober":35,"./constants":37}],58:[function(require,module,exports){
+},{"./charsetprober":31,"./constants":33}],54:[function(require,module,exports){
 // By default, do nothing
 exports.log = function () {};
 
@@ -13314,7 +12681,7 @@ exports.setLogger = function setLogger(loggerFunction) {
   exports.log = loggerFunction;
 };
 
-},{}],59:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -13356,8 +12723,7 @@ var logger = require('./logger');
     function init() {
         self._mDistributionAnalyzer = null;
         self._mCodingSM = null;
-        //self._mLastChar = ["\x00", "\x00"];
-        self._mLastChar = "\x00\x00";
+        self._mLastChar = ["\x00", "\x00"];
     }
 
     this.reset = function() {
@@ -13368,8 +12734,7 @@ var logger = require('./logger');
         if( this._mDistributionAnalyzer ) {
             this._mDistributionAnalyzer.reset();
         }
-        //this._mLastChar = ["\x00", "\x00"];
-        this._mLastChar = "\x00\x00";
+        this._mLastChar = ["\x00", "\x00"];
     }
 
     this.getCharsetName = function() {
@@ -13390,7 +12755,7 @@ var logger = require('./logger');
                 var charLen = this._mCodingSM.getCurrentCharLen();
                 if( i == 0 ) {
                     this._mLastChar[1] = aBuf[0];
-                    this._mDistributionAnalyzer.feed(this._mLastChar, charLen);
+                    this._mDistributionAnalyzer.feed(this._mLastChar.join(''), charLen);
                 } else {
                     this._mDistributionAnalyzer.feed(aBuf.slice(i-1,i+1), charLen);
                 }
@@ -13417,7 +12782,7 @@ MultiByteCharSetProber.prototype = new CharSetProber();
 
 module.exports = MultiByteCharSetProber
 
-},{"./charsetprober":35,"./constants":37,"./logger":58}],60:[function(require,module,exports){
+},{"./charsetprober":31,"./constants":33,"./logger":54}],56:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -13467,13 +12832,17 @@ function MBCSGroupProber() {
         new Big5Prober(),
         new EUCTWProber()
     ];
+    const supportedCharsetNames = this._mProbers.map(prober => prober.getCharsetName());
+    this.getSupportedCharsetNames = function() {
+        return supportedCharsetNames;
+    }
     this.reset();
 }
 MBCSGroupProber.prototype = new CharSetGroupProber();
 
 module.exports = MBCSGroupProber
 
-},{"./big5prober":32,"./charsetgroupprober":34,"./eucjpprober":40,"./euckrprober":42,"./euctwprober":44,"./gb2312prober":46,"./sjisprober":70,"./utf8prober":72}],61:[function(require,module,exports){
+},{"./big5prober":28,"./charsetgroupprober":30,"./eucjpprober":36,"./euckrprober":38,"./euctwprober":40,"./gb2312prober":42,"./sjisprober":66,"./utf8prober":68}],57:[function(require,module,exports){
 var consts = require('../constants');
 
 var BIG5_cls = [
@@ -13527,7 +12896,7 @@ module.exports = {
     "name"          : "Big5"
 };
 
-},{"../constants":37}],62:[function(require,module,exports){
+},{"../constants":33}],58:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCJP_cls = [
@@ -13583,7 +12952,7 @@ module.exports = {
     "name"          : "EUC-JP"
 };
 
-},{"../constants":37}],63:[function(require,module,exports){
+},{"../constants":33}],59:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCKR_cls  = [
@@ -13636,7 +13005,7 @@ module.exports = {
     "name"          : "EUC-KR"
 };
 
-},{"../constants":37}],64:[function(require,module,exports){
+},{"../constants":33}],60:[function(require,module,exports){
 var consts = require('../constants');
 
 var EUCTW_cls = [
@@ -13693,7 +13062,7 @@ module.exports = {
     "name"          : "x-euc-tw"
 };
 
-},{"../constants":37}],65:[function(require,module,exports){
+},{"../constants":33}],61:[function(require,module,exports){
 var consts = require('../constants');
 
 var GB2312_cls = [
@@ -13755,7 +13124,7 @@ module.exports = {
     "name"          : "GB2312"
 };
 
-},{"../constants":37}],66:[function(require,module,exports){
+},{"../constants":33}],62:[function(require,module,exports){
 var consts = require('../constants');
 
 var SJIS_cls = [
@@ -13811,7 +13180,7 @@ module.exports = {
     "name"          : "Shift_JIS"
 };
 
-},{"../constants":37}],67:[function(require,module,exports){
+},{"../constants":33}],63:[function(require,module,exports){
 var consts = require('../constants');
 
 var UTF8_cls = [
@@ -13888,7 +13257,7 @@ module.exports = {
     "name"          : "UTF-8"
 };
 
-},{"../constants":37}],68:[function(require,module,exports){
+},{"../constants":33}],64:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -14027,7 +13396,7 @@ SingleByteCharSetProber.prototype = new CharSetProber();
 
 module.exports = SingleByteCharSetProber
 
-},{"./charsetprober":35,"./constants":37,"./logger":58}],69:[function(require,module,exports){
+},{"./charsetprober":31,"./constants":33,"./logger":54}],65:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -14094,7 +13463,16 @@ function SBCSGroupProber() {
         hebrewProber.setModelProbers(logicalHebrewProber, visualHebrewProber);
         self._mProbers.push(hebrewProber, logicalHebrewProber, visualHebrewProber);
 
+        self._supportedCharsetNames = [];
+        for (const prober of self._mProbers) {
+            self._supportedCharsetNames.push(prober.getCharsetName())
+        }
+
         self.reset();
+    }
+
+    this.getSupportedCharsetNames = function() {
+        return  self._supportedCharsetNames;
     }
 
     init();
@@ -14103,7 +13481,7 @@ SBCSGroupProber.prototype = new CharSetGroupProber();
 
 module.exports = SBCSGroupProber;
 
-},{"./charsetgroupprober":34,"./hebrewprober":47,"./langbulgarianmodel":51,"./langcyrillicmodel":52,"./langgreekmodel":53,"./langhebrewmodel":54,"./langhungarianmodel":55,"./langthaimodel":56,"./sbcharsetprober":68}],70:[function(require,module,exports){
+},{"./charsetgroupprober":30,"./hebrewprober":43,"./langbulgarianmodel":47,"./langcyrillicmodel":48,"./langgreekmodel":49,"./langhebrewmodel":50,"./langhungarianmodel":51,"./langthaimodel":52,"./sbcharsetprober":64}],66:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -14177,8 +13555,8 @@ function SJISProber() {
                 var charLen = this._mCodingSM.getCurrentCharLen();
                 if( i == 0 ) {
                     this._mLastChar[1] = aBuf[0];
-                    this._mContextAnalyzer.feed(this._mLastChar.slice(2 - charLen), charLen);
-                    this._mDistributionAnalyzer.feed(this._mLastChar, charLen);
+                    this._mContextAnalyzer.feed(this._mLastChar.slice(2 - charLen).join(''), charLen);
+                    this._mDistributionAnalyzer.feed(this._mLastChar.join(''), charLen);
                 } else {
                     this._mContextAnalyzer.feed(aBuf.slice(i + 1 - charLen, i + 3 - charLen), charLen);
                     this._mDistributionAnalyzer.feed(aBuf.slice(i - 1, i + 1), charLen);
@@ -14210,7 +13588,7 @@ SJISProber.prototype = new MultiByteCharSetProber();
 
 module.exports = SJISProber
 
-},{"./chardistribution":33,"./codingstatemachine":36,"./constants":37,"./jpcntx":50,"./logger":58,"./mbcharsetprober":59,"./mbcssm/sjis":66}],71:[function(require,module,exports){
+},{"./chardistribution":29,"./codingstatemachine":32,"./constants":33,"./jpcntx":46,"./logger":54,"./mbcharsetprober":55,"./mbcssm/sjis":62}],67:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -14248,12 +13626,58 @@ var constants = require('./constants');
 var MBCSGroupProber = require('./mbcsgroupprober');
 var SBCSGroupProber = require('./sbcsgroupprober');
 var Latin1Prober = require('./latin1prober');
-var EscCharSetProber = require('./escprober')
+var EscCharSetProber = require('./escprober');
 var logger = require('./logger');
+
+const supportedEncodings = (function() {
+    const BOM_UTF = [
+        "UTF-8", "UTF-32LE", "UTF-32BE", "UTF-32BE", "UTF-16LE", "UTF-16BE",
+        "X-ISO-10646-UCS-4-3412", "X-ISO-10646-UCS-4-2143"
+    ]
+    const probers = [
+        new EscCharSetProber(),
+        new MBCSGroupProber(),
+        new SBCSGroupProber(),
+        new Latin1Prober()
+    ];
+    const encodings = BOM_UTF.slice(0);
+    for (const prober of probers) {
+        [].push.apply(encodings, prober.getSupportedCharsetNames());
+    }
+    return encodings;
+})();
+
+const supportedEncodingsDenormalized = (function() {
+    const denormalizedEncodings = [];
+    for (const encoding of supportedEncodings) {
+        denormalizedEncodings.push(
+            encoding.toLocaleLowerCase(),
+            encoding.toLocaleLowerCase().replace(/-/g, "")
+        );
+    }
+    return denormalizedEncodings;
+})();
 
 function UniversalDetector(options) {
     if (!options) options = {};
-    if (!options.minimumThreshold)  options.minimumThreshold = 0.20;
+
+    if (typeof options.minimumThreshold !== "number") {
+        if (options.detectEncodings) {
+            // If encodings are narrowed down by the user allow for
+            // any threshold to be returned.
+            options.minimumThreshold = 0;
+        } else {
+            options.minimumThreshold = 0.20;
+        }
+    }
+
+    if (options.detectEncodings) {
+        for (const encoding of options.detectEncodings) {
+            if (!supportedEncodingsDenormalized.includes(encoding.toLowerCase())) {
+                throw new Error(`Encoding ${encoding} is not supported. Supported encodings: ${supportedEncodings}.`);
+            }
+        }
+    }
 
     var _state = {
         pureAscii   : 0,
@@ -14270,6 +13694,14 @@ function UniversalDetector(options) {
         self.reset();
     }
 
+    function canDetectEncoding(encoding) {
+        if (!options.detectEncodings) {
+            return true;
+        }
+        var lowerDetectedEncodings = options.detectEncodings.map(encoding => encoding.toLowerCase());
+        return lowerDetectedEncodings.includes(encoding.toLowerCase());
+    }
+
     this.reset = function() {
         this.result = {"encoding": null, "confidence": 0.0};
         this.results = []
@@ -14277,7 +13709,7 @@ function UniversalDetector(options) {
         this._mStart = true;
         this._mGotData = false;
         this._mInputState = _state.pureAscii;
-        this._mLastChar = "";
+        this._mLastChar = [];
         this._mBOM = "";
         if( this._mEscCharsetProber ) {
             this._mEscCharsetProber.reset();
@@ -14296,25 +13728,25 @@ function UniversalDetector(options) {
         if( !this._mGotData ) {
             this._mBOM += aBuf;
             // If the data starts with BOM, we know it is UTF
-            if( this._mBOM.slice(0,3) == "\xEF\xBB\xBF" ) {
+            if( this._mBOM.slice(0,3) == "\xEF\xBB\xBF" && canDetectEncoding("UTF-8")) {
                 // EF BB BF  UTF-8 with BOM
                 this.result = {"encoding": "UTF-8", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,4) == "\xFF\xFE\x00\x00" ) {
+            } else if( this._mBOM.slice(0,4) == "\xFF\xFE\x00\x00"  && canDetectEncoding("UTF-32LE") ) {
                 // FF FE 00 00  UTF-32, little-endian BOM
                 this.result = {"encoding": "UTF-32LE", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,4) == "\x00\x00\xFE\xFF" ) {
+            } else if( this._mBOM.slice(0,4) == "\x00\x00\xFE\xFF"  && canDetectEncoding("UTF-32BE")) {
                 // 00 00 FE FF  UTF-32, big-endian BOM
                 this.result = {"encoding": "UTF-32BE", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,4) == "\xFE\xFF\x00\x00" ) {
+            } else if( this._mBOM.slice(0,4) == "\xFE\xFF\x00\x00"  && canDetectEncoding("X-ISO-10646-UCS-4-3412")) {
                 // FE FF 00 00  UCS-4, unusual octet order BOM (3412)
                 this.result = {"encoding": "X-ISO-10646-UCS-4-3412", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,4) == "\x00\x00\xFF\xFE" ) {
+            } else if( this._mBOM.slice(0,4) == "\x00\x00\xFF\xFE"  && canDetectEncoding("X-ISO-10646-UCS-4-2143")) {
                 // 00 00 FF FE  UCS-4, unusual octet order BOM (2143)
                 this.result = {"encoding": "X-ISO-10646-UCS-4-2143", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,2) == "\xFF\xFE" ) {
+            } else if( this._mBOM.slice(0,2) == "\xFF\xFE" && canDetectEncoding("UTF-16LE")) {
                 // FF FE  UTF-16, little endian BOM
                 this.result = {"encoding": "UTF-16LE", "confidence": 1.0};
-            } else if( this._mBOM.slice(0,2) == "\xFE\xFF" ) {
+            } else if( this._mBOM.slice(0,2) == "\xFE\xFF"  && canDetectEncoding("UTF-16BE")) {
                 // FE FF  UTF-16, big endian BOM
                 this.result = {"encoding": "UTF-16BE", "confidence": 1.0};
             }
@@ -14338,18 +13770,18 @@ function UniversalDetector(options) {
         if( this._mInputState == _state.pureAscii ) {
             if( this._highBitDetector.test(aBuf) ) {
                 this._mInputState = _state.highbyte;
-            } else if( this._escDetector.test(this._mLastChar + aBuf) ) {
+            } else if( this._escDetector.test(this._mLastChar.join('') + aBuf) ) {
                 this._mInputState = _state.escAscii;
             }
         }
 
-        this._mLastChar = aBuf.slice(-1);
+        this._mLastChar = aBuf.slice(-1).split('');
 
         if( this._mInputState == _state.escAscii ) {
             if( !this._mEscCharsetProber ) {
                 this._mEscCharsetProber = new EscCharSetProber();
             }
-            if( this._mEscCharsetProber.feed(aBuf) == constants.foundIt ) {
+            if( this._mEscCharsetProber.feed(aBuf) == constants.foundIt && canDetectEncoding(this._mEscCharsetProber.getCharsetName()) ) {
                 this.result = {
                     "encoding": this._mEscCharsetProber.getCharsetName(),
                     "confidence": this._mEscCharsetProber.getConfidence()
@@ -14366,7 +13798,7 @@ function UniversalDetector(options) {
                 ];
             }
             for( var i = 0, prober; prober = this._mCharsetProbers[i]; i++ ) {
-                if( prober.feed(aBuf) == constants.foundIt ) {
+                if( prober.feed(aBuf) == constants.foundIt && canDetectEncoding(prober.getCharsetName()) ) {
                     this.result = {
                         "encoding": prober.getCharsetName(),
                         "confidence": prober.getConfidence()
@@ -14387,21 +13819,42 @@ function UniversalDetector(options) {
         }
         this.done = true;
 
-        if( this._mInputState == _state.pureAscii ) {
+        if( this._mInputState == _state.pureAscii && canDetectEncoding("ascii") ) {
             logger.log("pure ascii")
             this.result = {"encoding": "ascii", "confidence": 1.0};
             this.results.push(this.result);
             return this.result;
         }
 
-        if( this._mInputState == _state.highbyte ) {
-            for( var i = 0, prober; prober = this._mCharsetProbers[i]; i++ ) {
-                if( !prober || !prober.getCharsetName()) continue;
+        if (this._mInputState == _state.highbyte) {
+            let windows_1252_confidence = 0;
+            let windows_1250_detected = false;
+            for (var i = 0, prober; prober = this._mCharsetProbers[i]; i++) {
+                if (!prober) continue;
+                const charsetName = prober.getCharsetName();
+                const confidence = prober.getConfidence();
+                if (prober.getCharsetName() === "windows-1252") {
+                    windows_1252_confidence = confidence;
+                }
+                if (!charsetName || !canDetectEncoding(charsetName)) continue;
                 this.results.push({
                     "encoding": prober.getCharsetName(),
-                    "confidence": prober.getConfidence()
+                    "confidence": confidence
                 });
-                logger.log(prober.getCharsetName() + " confidence " + prober.getConfidence());
+                if (prober.getCharsetName() === "windows-1250") {
+                    windows_1250_detected = true;
+                }
+                logger.log(prober.getCharsetName() + " confidence " + confidence);
+            }
+            // HACK: When windows-1252 is detected it's almost sure that it can
+            // also be windows-1250.
+            // https://en.wikipedia.org/wiki/Windows-1250 (Central European)
+            if (windows_1252_confidence && !windows_1250_detected && canDetectEncoding("windows-1250")) {
+                this.results.push({
+                    "encoding": "windows-1250",
+                    // Report the confidence just a bit under windows-1252's.
+                    "confidence": windows_1252_confidence - Math.pow(5/10, (String(windows_1252_confidence).length - 1)),
+                });
             }
             this.results.sort(function(a, b) {
                 return b.confidence - a.confidence;
@@ -14418,7 +13871,7 @@ function UniversalDetector(options) {
         if( logger.enabled ) {
             logger.log("no probers hit minimum threshhold\n");
             for( var i = 0, prober; prober = this._mCharsetProbers[i]; i++ ) {
-                if( !prober ) continue;
+                if( !prober || !canDetectEncoding(prober.getCharsetName()) ) continue;
                 logger.log(prober.getCharsetName() + " confidence = " +
                     prober.getConfidence() + "\n");
             }
@@ -14430,7 +13883,7 @@ function UniversalDetector(options) {
 
 module.exports = UniversalDetector;
 
-},{"./constants":37,"./escprober":38,"./latin1prober":57,"./logger":58,"./mbcsgroupprober":60,"./sbcsgroupprober":69}],72:[function(require,module,exports){
+},{"./constants":33,"./escprober":34,"./latin1prober":53,"./logger":54,"./mbcsgroupprober":56,"./sbcsgroupprober":65}],68:[function(require,module,exports){
 /*
  * The Original Code is Mozilla Universal charset detector code.
  *
@@ -14540,7 +13993,260 @@ UTF8Prober.prototype = new CharSetProber();
 
 module.exports = UTF8Prober;
 
-},{"./charsetprober":35,"./codingstatemachine":36,"./constants":37,"./mbcssm/utf8":67}],73:[function(require,module,exports){
+},{"./charsetprober":31,"./codingstatemachine":32,"./constants":33,"./mbcssm/utf8":63}],69:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],70:[function(require,module,exports){
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
+/* eslint-disable node/no-deprecated-api */
+var buffer = require('buffer')
+var Buffer = buffer.Buffer
+
+// alternative to using Object.keys for old browsers
+function copyProps (src, dst) {
+  for (var key in src) {
+    dst[key] = src[key]
+  }
+}
+if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
+  module.exports = buffer
+} else {
+  // Copy properties from require('buffer')
+  copyProps(buffer, exports)
+  exports.Buffer = SafeBuffer
+}
+
+function SafeBuffer (arg, encodingOrOffset, length) {
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.prototype = Object.create(Buffer.prototype)
+
+// Copy static methods from Buffer
+copyProps(Buffer, SafeBuffer)
+
+SafeBuffer.from = function (arg, encodingOrOffset, length) {
+  if (typeof arg === 'number') {
+    throw new TypeError('Argument must not be a number')
+  }
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.alloc = function (size, fill, encoding) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  var buf = Buffer(size)
+  if (fill !== undefined) {
+    if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+  } else {
+    buf.fill(0)
+  }
+  return buf
+}
+
+SafeBuffer.allocUnsafe = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return Buffer(size)
+}
+
+SafeBuffer.allocUnsafeSlow = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return buffer.SlowBuffer(size)
+}
+
+},{"buffer":3}],71:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-disable node/no-deprecated-api */
 
@@ -14621,5 +14327,400 @@ if (!safer.constants) {
 module.exports = safer
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":5,"buffer":3}]},{},[8])(8)
+},{"_process":69,"buffer":3}],72:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+/*<replacement>*/
+
+var Buffer = require('safe-buffer').Buffer;
+/*</replacement>*/
+
+var isEncoding = Buffer.isEncoding || function (encoding) {
+  encoding = '' + encoding;
+  switch (encoding && encoding.toLowerCase()) {
+    case 'hex':case 'utf8':case 'utf-8':case 'ascii':case 'binary':case 'base64':case 'ucs2':case 'ucs-2':case 'utf16le':case 'utf-16le':case 'raw':
+      return true;
+    default:
+      return false;
+  }
+};
+
+function _normalizeEncoding(enc) {
+  if (!enc) return 'utf8';
+  var retried;
+  while (true) {
+    switch (enc) {
+      case 'utf8':
+      case 'utf-8':
+        return 'utf8';
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return 'utf16le';
+      case 'latin1':
+      case 'binary':
+        return 'latin1';
+      case 'base64':
+      case 'ascii':
+      case 'hex':
+        return enc;
+      default:
+        if (retried) return; // undefined
+        enc = ('' + enc).toLowerCase();
+        retried = true;
+    }
+  }
+};
+
+// Do not cache `Buffer.isEncoding` when checking encoding names as some
+// modules monkey-patch it to support additional encodings
+function normalizeEncoding(enc) {
+  var nenc = _normalizeEncoding(enc);
+  if (typeof nenc !== 'string' && (Buffer.isEncoding === isEncoding || !isEncoding(enc))) throw new Error('Unknown encoding: ' + enc);
+  return nenc || enc;
+}
+
+// StringDecoder provides an interface for efficiently splitting a series of
+// buffers into a series of JS strings without breaking apart multi-byte
+// characters.
+exports.StringDecoder = StringDecoder;
+function StringDecoder(encoding) {
+  this.encoding = normalizeEncoding(encoding);
+  var nb;
+  switch (this.encoding) {
+    case 'utf16le':
+      this.text = utf16Text;
+      this.end = utf16End;
+      nb = 4;
+      break;
+    case 'utf8':
+      this.fillLast = utf8FillLast;
+      nb = 4;
+      break;
+    case 'base64':
+      this.text = base64Text;
+      this.end = base64End;
+      nb = 3;
+      break;
+    default:
+      this.write = simpleWrite;
+      this.end = simpleEnd;
+      return;
+  }
+  this.lastNeed = 0;
+  this.lastTotal = 0;
+  this.lastChar = Buffer.allocUnsafe(nb);
+}
+
+StringDecoder.prototype.write = function (buf) {
+  if (buf.length === 0) return '';
+  var r;
+  var i;
+  if (this.lastNeed) {
+    r = this.fillLast(buf);
+    if (r === undefined) return '';
+    i = this.lastNeed;
+    this.lastNeed = 0;
+  } else {
+    i = 0;
+  }
+  if (i < buf.length) return r ? r + this.text(buf, i) : this.text(buf, i);
+  return r || '';
+};
+
+StringDecoder.prototype.end = utf8End;
+
+// Returns only complete characters in a Buffer
+StringDecoder.prototype.text = utf8Text;
+
+// Attempts to complete a partial non-UTF-8 character using bytes from a Buffer
+StringDecoder.prototype.fillLast = function (buf) {
+  if (this.lastNeed <= buf.length) {
+    buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, this.lastNeed);
+    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
+  }
+  buf.copy(this.lastChar, this.lastTotal - this.lastNeed, 0, buf.length);
+  this.lastNeed -= buf.length;
+};
+
+// Checks the type of a UTF-8 byte, whether it's ASCII, a leading byte, or a
+// continuation byte. If an invalid byte is detected, -2 is returned.
+function utf8CheckByte(byte) {
+  if (byte <= 0x7F) return 0;else if (byte >> 5 === 0x06) return 2;else if (byte >> 4 === 0x0E) return 3;else if (byte >> 3 === 0x1E) return 4;
+  return byte >> 6 === 0x02 ? -1 : -2;
+}
+
+// Checks at most 3 bytes at the end of a Buffer in order to detect an
+// incomplete multi-byte UTF-8 character. The total number of bytes (2, 3, or 4)
+// needed to complete the UTF-8 character (if applicable) are returned.
+function utf8CheckIncomplete(self, buf, i) {
+  var j = buf.length - 1;
+  if (j < i) return 0;
+  var nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) self.lastNeed = nb - 1;
+    return nb;
+  }
+  if (--j < i || nb === -2) return 0;
+  nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) self.lastNeed = nb - 2;
+    return nb;
+  }
+  if (--j < i || nb === -2) return 0;
+  nb = utf8CheckByte(buf[j]);
+  if (nb >= 0) {
+    if (nb > 0) {
+      if (nb === 2) nb = 0;else self.lastNeed = nb - 3;
+    }
+    return nb;
+  }
+  return 0;
+}
+
+// Validates as many continuation bytes for a multi-byte UTF-8 character as
+// needed or are available. If we see a non-continuation byte where we expect
+// one, we "replace" the validated continuation bytes we've seen so far with
+// a single UTF-8 replacement character ('\ufffd'), to match v8's UTF-8 decoding
+// behavior. The continuation byte check is included three times in the case
+// where all of the continuation bytes for a character exist in the same buffer.
+// It is also done this way as a slight performance increase instead of using a
+// loop.
+function utf8CheckExtraBytes(self, buf, p) {
+  if ((buf[0] & 0xC0) !== 0x80) {
+    self.lastNeed = 0;
+    return '\ufffd';
+  }
+  if (self.lastNeed > 1 && buf.length > 1) {
+    if ((buf[1] & 0xC0) !== 0x80) {
+      self.lastNeed = 1;
+      return '\ufffd';
+    }
+    if (self.lastNeed > 2 && buf.length > 2) {
+      if ((buf[2] & 0xC0) !== 0x80) {
+        self.lastNeed = 2;
+        return '\ufffd';
+      }
+    }
+  }
+}
+
+// Attempts to complete a multi-byte UTF-8 character using bytes from a Buffer.
+function utf8FillLast(buf) {
+  var p = this.lastTotal - this.lastNeed;
+  var r = utf8CheckExtraBytes(this, buf, p);
+  if (r !== undefined) return r;
+  if (this.lastNeed <= buf.length) {
+    buf.copy(this.lastChar, p, 0, this.lastNeed);
+    return this.lastChar.toString(this.encoding, 0, this.lastTotal);
+  }
+  buf.copy(this.lastChar, p, 0, buf.length);
+  this.lastNeed -= buf.length;
+}
+
+// Returns all complete UTF-8 characters in a Buffer. If the Buffer ended on a
+// partial character, the character's bytes are buffered until the required
+// number of bytes are available.
+function utf8Text(buf, i) {
+  var total = utf8CheckIncomplete(this, buf, i);
+  if (!this.lastNeed) return buf.toString('utf8', i);
+  this.lastTotal = total;
+  var end = buf.length - (total - this.lastNeed);
+  buf.copy(this.lastChar, 0, end);
+  return buf.toString('utf8', i, end);
+}
+
+// For UTF-8, a replacement character is added when ending on a partial
+// character.
+function utf8End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) return r + '\ufffd';
+  return r;
+}
+
+// UTF-16LE typically needs two bytes per character, but even if we have an even
+// number of bytes available, we need to check if we end on a leading/high
+// surrogate. In that case, we need to wait for the next two bytes in order to
+// decode the last character properly.
+function utf16Text(buf, i) {
+  if ((buf.length - i) % 2 === 0) {
+    var r = buf.toString('utf16le', i);
+    if (r) {
+      var c = r.charCodeAt(r.length - 1);
+      if (c >= 0xD800 && c <= 0xDBFF) {
+        this.lastNeed = 2;
+        this.lastTotal = 4;
+        this.lastChar[0] = buf[buf.length - 2];
+        this.lastChar[1] = buf[buf.length - 1];
+        return r.slice(0, -1);
+      }
+    }
+    return r;
+  }
+  this.lastNeed = 1;
+  this.lastTotal = 2;
+  this.lastChar[0] = buf[buf.length - 1];
+  return buf.toString('utf16le', i, buf.length - 1);
+}
+
+// For UTF-16LE we do not explicitly append special replacement characters if we
+// end on a partial character, we simply let v8 handle that.
+function utf16End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) {
+    var end = this.lastTotal - this.lastNeed;
+    return r + this.lastChar.toString('utf16le', 0, end);
+  }
+  return r;
+}
+
+function base64Text(buf, i) {
+  var n = (buf.length - i) % 3;
+  if (n === 0) return buf.toString('base64', i);
+  this.lastNeed = 3 - n;
+  this.lastTotal = 3;
+  if (n === 1) {
+    this.lastChar[0] = buf[buf.length - 1];
+  } else {
+    this.lastChar[0] = buf[buf.length - 2];
+    this.lastChar[1] = buf[buf.length - 1];
+  }
+  return buf.toString('base64', i, buf.length - n);
+}
+
+function base64End(buf) {
+  var r = buf && buf.length ? this.write(buf) : '';
+  if (this.lastNeed) return r + this.lastChar.toString('base64', 0, 3 - this.lastNeed);
+  return r;
+}
+
+// Pass bytes on through for single-byte encodings (e.g. ascii, latin1, hex)
+function simpleWrite(buf) {
+  return buf.toString(this.encoding);
+}
+
+function simpleEnd(buf) {
+  return buf && buf.length ? this.write(buf) : '';
+}
+},{"safe-buffer":70}],73:[function(require,module,exports){
+const jschardet = require("jschardet");
+const iconv = require("iconv-lite");
+iconv.skipDecodeWarning = true; // This is because we have to use decoding from a binary string in the browser version
+
+function convert(inMap, outMap, inText) {
+  let encoding = jschardet.detect(inText).encoding;
+  inText = iconv.decode(inText, encoding);
+
+  let outText = inText;
+
+  if (inMap == "unicode" && outMap == "unicode") {
+    outText = clearUnicode(outText);
+    encoding = "utf-8";
+  } else if (inMap == "unicode") {
+    outText = clearUnicode(outText);
+    outText = fromUnicode(outMap.characters, outText);
+    encoding = outMap.encoding;
+  } else if (outMap == "unicode") {
+    outText = toUnicode(inMap.characters, outText);
+    outText = clearUnicode(outText);
+    encoding = "utf-8";
+  } else {
+    outText = toUnicode(inMap.characters, outText);
+    outText = fromUnicode(outMap.characters, outText, false);
+    encoding = outMap.encoding;
+  }
+
+  outText = iconv.encode(outText, encoding);
+  return outText;
+}
+
+function toUnicode(inTable, inText) {
+  let outText = inText;
+  // At first, we need to replace letters A-Z, as they're used as a virtual braille dots
+  for (let char of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+    if (char in inTable) {
+      outText = outText.replaceAll(char, inTable[char]);
+      delete inTable[char];
+    }
+  }
+  // Now we can replace other characters
+  for (let char in inTable) {
+    if (inTable[char].length == 1 && inTable[char].charCodeAt(0) <= 10303) { // Check if the character doesn't correspond to a virtual dot or a dot with lowered dots (7 and 8)
+      outText = outText.replaceAll(char, inTable[char] + "0");
+    } else {
+      outText = outText.replaceAll(char, inTable[char]);
+    }
+  }
+  return outText;
+}
+
+function fromUnicode(outTable, inText, isClean = true) {
+  let outText = inText;
+  if (isClean) {
+    for (let char in outTable) {
+      outText = outText.replaceAll(outTable[char], char);
+    }
+  } else {
+    let chars = outText.match(/[\u2801-\u28FF][0A-Z]?/g); // Get all braille characters, both with virtual dots and without
+    chars = Array.from(new Set(chars));
+    for (let char of chars) {
+      if (char[1] == "0") {
+        outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(char[0])]);
+      } else {
+        if (Object.values(outTable).includes(char)) {
+          outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(char)]);
+        } else {
+          outText = outText.replaceAll(char, Object.keys(outTable)[Object.values(outTable).indexOf(clearUnicode(char))]);
+        }
+      }
+    }
+  }
+  return outText;
+}
+
+function clearUnicode(inText) {
+  let outText = inText;
+  outText = outText.replaceAll("\u2800", " "); // Replace Braille pattern blank with ASCII space
+  outText = outText.replaceAll(/[0A-Z]/g, ""); // Remove virtual dots
+  // Replace characters containing lowered dots with corresponding characters without them
+  let loweredDots = outText.match(/[\u2840-\u28FF]/g);
+  loweredDots = Array.from(new Set(loweredDots));
+  for (let char of loweredDots) {
+    let number = char.charCodeAt(0) - 10240;
+    if (number < 128) {
+      outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 64));
+    } else if (number < 192) {
+      outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 128));
+    } else {
+      outText = outText.replaceAll(char, String.fromCharCode(10240 + number - 192));
+    }
+  }
+  return outText;
+}
+
+module.exports = convert;
+
+},{"iconv-lite":23,"jschardet":26}]},{},[73])(73)
 });
