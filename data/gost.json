@@ -1,6 +1,7 @@
 {
     "encoding": "CP866",
     "format": "txt",
+    "8dots": false,
     "characters": {
         "!": "⠖",
         "\"": "⠦",
