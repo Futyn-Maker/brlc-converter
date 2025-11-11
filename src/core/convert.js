@@ -90,7 +90,10 @@ function fromUnicode(outTable, inText, isClean = true) {
   // Build a reverse map (value: key) for efficient lookups
   const reverseOutTable = {};
   for (const key in outTable) {
-    reverseOutTable[outTable[key]] = key;
+    const value = outTable[key];
+    if (!reverseOutTable[value]) {
+      reverseOutTable[value] = key;
+    }
   }
 
   if (isClean) {
@@ -175,7 +178,7 @@ function convert(inMap, outMap, inText, force6dot = false) {
   inText = iconv.decode(inText, encoding);
 
   let outText = inText;
-  const isSource8dot = inMap.8dots || false;
+  const isSource8dot = (inMap === 'unicode') ? true : (inMap['8dots'] || false);
 
   if (inMap == "unicode" && outMap == "unicode") {
     outText = outText.replaceAll("\u2800", " ");
