@@ -72,7 +72,7 @@ function runCli(args, pkg) {
     let outFormat = loadMap(args.to);
 
     let inText = fs.readFileSync(args.input);
-    let outText = convert(inFormat, outFormat, inText);
+    let outText = convert(inFormat, outFormat, inText, args.force6dot);
 
     let fileName = "";
     if ("output" in args) {
@@ -121,7 +121,7 @@ async function runLocalWebServer(isDaemon = false) {
         // If we are here, server is running. Open browser and exit this instance
         const url = `http://localhost:${port}`;
         if (!isDaemon) console.log(`Existing server found. Opening ${url}`);
-        open(url, {new: true});
+        open(url, { new: true });
         return;
 
       } catch (e) {
@@ -198,7 +198,7 @@ async function runLocalWebServer(isDaemon = false) {
         if (!isDaemon) console.error('Failed to write lock file:', e);
       }
 
-      open(url, {new: true});
+      open(url, { new: true });
     });
 
     // Graceful shutdown: remove the lock file
@@ -250,6 +250,7 @@ async function run() {
     .option("-t, --to <format>", "The braille encoding of the output file", "unicode")
     .option("-i, --input <file>", "Path to the file to be converted")
     .option("-o, --output <file>", "Path to the output file")
+    .option("--force-6dot", "Force 6-dot output (remove dots 7/8) when converting to Unicode")
     .showHelpAfterError();
 
   program.parse(process.argv);

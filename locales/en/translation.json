@@ -5,6 +5,7 @@
   "label_inFormat": "Source Format:",
   "label_inText": "File to convert:",
   "label_outFormat": "Output Format:",
+  "label_force_6dot": "Force 6-dot output (remove dots 7 and 8)",
   "submit_button": "Convert",
   "opt_unicode_1": "Braille Unicode",
   "opt_brf_1": "BRF (Braille ASCII)",

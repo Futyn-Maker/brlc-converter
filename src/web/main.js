@@ -1,3 +1,40 @@
+/**
+ * Checks if a given format name is considered 8-dot.
+ * 'unicode' is treated as 8-dot for this logic.
+ * @param {string} formatName
+ * @returns {boolean}
+ */
+function isFormat8dot(formatName) {
+  if (formatName === 'unicode') {
+    return true;
+  }
+  if (window.brlcData && window.brlcData[formatName]) {
+    // Check for the 8dots property in the loaded data
+    return window.brlcData[formatName]["8dots"] === true;
+  }
+  return false;
+}
+
+/**
+ * Shows or hides the 'force 6-dot' checkbox based on format selections.
+ */
+function update6dotCheckboxVisibility() {
+  const inFormat = document.getElementById('inFormat').value;
+  const outFormat = document.getElementById('outFormat').value;
+  const container = document.getElementById('force-6dot-container');
+  const checkbox = document.getElementById('force-6dot');
+
+  // Show only if:
+  // 1. Output is Unicode
+  // 2. Input is 8-dot (or also Unicode)
+  if (outFormat === 'unicode' && isFormat8dot(inFormat)) {
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+    checkbox.checked = false; // Reset when hidden
+  }
+}
+
 function generate(inFormat, outFormat, inTextFile) {
   // Clear previous link
   const downloadContainer = document.getElementById("download-container");
@@ -6,11 +43,15 @@ function generate(inFormat, outFormat, inTextFile) {
   const inMap = (inFormat === 'unicode') ? 'unicode' : window.brlcData[inFormat];
   const outMap = (outFormat === 'unicode') ? 'unicode' : window.brlcData[outFormat];
 
+  // Get the 6-dot flag value
+  const force6dotCheckbox = document.getElementById('force-6dot');
+  const force6dot = force6dotCheckbox.checked && (force6dotCheckbox.closest('div').style.display !== 'none');
+
   const reader = new FileReader();
   reader.readAsBinaryString(inTextFile); // Keep as binary string for jschardet
   reader.onload = function () {
     try {
-      const outText = window.convert(inMap, outMap, reader.result);
+      const outText = window.convert(inMap, outMap, reader.result, force6dot);
 
       let fileName = inTextFile.name.replace(/\.\w+$/, "");
       if (outFormat === "unicode") {
@@ -99,6 +140,16 @@ function initApp() {
       generate(inFormat, outFormat, inTextFile);
     }
   });
+
+  // Attach listeners to format dropdowns
+  const inFormatSelect = document.getElementById('inFormat');
+  const outFormatSelect = document.getElementById('outFormat');
+
+  inFormatSelect.addEventListener('change', update6dotCheckboxVisibility);
+  outFormatSelect.addEventListener('change', update6dotCheckboxVisibility);
+
+  // Run once on load
+  update6dotCheckboxVisibility();
 }
 
 window.addEventListener('load', initApp);

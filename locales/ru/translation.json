@@ -5,6 +5,7 @@
   "label_inFormat": "Исходный формат:",
   "label_inText": "Файл для конвертации:",
   "label_outFormat": "Выходной формат:",
+  "label_force_6dot": "Шеститочечный вывод (убрать точки 7 и 8",
   "submit_button": "Конвертировать",
   "opt_unicode_1": "Braille Unicode",
   "opt_brf_1": "BRF (Braille ASCII)",
