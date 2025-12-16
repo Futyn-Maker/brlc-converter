@@ -32,6 +32,8 @@
         <select name="inFormat" id="inFormat" class="form-select">
           <option value="unicode" id="opt-unicode-1">Braille Unicode</option>
           <option value="brf" id="opt-brf-1">BRF (Braille ASCII)</option>
+          <option value="nabcc" id="opt-nabcc-1">BRF (North American Braille Computer Code)</option>
+          <option value="eurobraille" id="opt-eurobraille-1">Eurobraille</option>
           <option value="chtenie" id="opt-chtenie-1">"CHTENIE" Publishing House of All-Russia Society of the blind
             braille encoding</option>
           <option value="logos" id="opt-logos-1">Logos braille encoding</option>
@@ -47,11 +49,18 @@
         <select name="outFormat" id="outFormat" class="form-select">
           <option value="unicode" id="opt-unicode-2">Braille Unicode</option>
           <option value="brf" id="opt-brf-2">BRF (Braille ASCII)</option>
+          <option value="nabcc" id="opt-nabcc-2">BRF (North American Braille Computer Code)</option>
+          <option value="eurobraille" id="opt-eurobraille-2">Eurobraille</option>
           <option value="chtenie" id="opt-chtenie-2">"CHTENIE" Publishing House of All-Russia Society of the blind
             braille encoding</option>
           <option value="logos" id="opt-logos-2">Logos braille encoding</option>
           <option value="gost" id="opt-gost-2">GOST R 58511-2019</option>
         </select>
+      </div>
+      <div class="mb-3 form-check" id="force-6dot-container" style="display: none;">
+        <input type="checkbox" class="form-check-input" name="force6dot" id="force-6dot">
+        <label class="form-check-label" for="force-6dot" id="label-force-6dot">Force 6-dot output (discard dots 7 and
+          8)</label>
       </div>
       <input type="submit" class="btn btn-primary" id="submit-button" value="Convert" />
     </form>
