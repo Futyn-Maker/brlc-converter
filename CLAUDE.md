@@ -33,7 +33,8 @@ npm run build
 
 - [src/core/convert.js](src/core/convert.js) - Core conversion logic with intermediate Unicode representation
 - [src/cli/cli.js](src/cli/cli.js) - CLI and local web server. Uses `node:sea` module to detect Single Executable mode
-- [src/web/main.js](src/web/main.js) - Browser-side code using `window.brlcData` and `window.brlcLocales`
+- [src/web/main.js](src/web/main.js) - Browser-side code using `window.brlcData` and `window.brlcLocales`, handles language switching
+- [src/web/index.html](src/web/index.html) - Web interface with header containing language selector
 
 ### Conversion Algorithm
 
@@ -101,9 +102,15 @@ Encoding mappings in `data/*.json`:
 1. Create folder `locales/{lang_code}/` (e.g., `locales/fr/`)
 2. Copy `locales/en/translation.json` to the new folder
 3. Translate all string values (keep the keys unchanged)
-4. Rebuild: `npm run build:web`
+4. Set `language_name` to the language name in its native form (e.g., "Français" for French)
+5. Set `language_selector_label` to the word "Language" in the target language
+6. Rebuild: `npm run build:web`
 
-The web UI auto-detects browser language via i18next.
+**Required translation keys for language selector:**
+- `language_name` - The language name in its native form (shown in the language menu)
+- `language_selector_label` - The word "Language" (used for the selector button and aria-label)
+
+The web UI auto-detects browser language via i18next. Users can also manually select a language from the header dropdown menu.
 
 ## Adding New Braille Encodings
 

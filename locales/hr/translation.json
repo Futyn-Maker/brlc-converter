@@ -1,4 +1,6 @@
 {
+  "language_name": "Hrvatski",
+  "language_selector_label": "Jezik",
   "app_title": "Konverter brajičnih kodnih rasporeda",
   "app_title_h1": "Konverter brajičnih kodnih rasporeda",
   "app_description": "Ova vam usluga omogućuje konverziju gotove brajične datoteke iz jedne brajične kodne tablice u drugu. Brajična kodna tablica je skup znakova koji se koristi za pokazivanje brajičnih znakova u digitalnom obliku. U povijesti, različite države, pa čak i  različite izdavačke kuće koje tiskaju materijale na brailleovom pismu u istoj državi, koriste različite kodne tablice prilikom pripreme teksta za brajicu. Takva situacija nastaje zbog korištenja različite opreme, kao i zbog specifičnosti korištene brailleove abecede koja se koristi. Ovaj je alat dizajniran kako bi se riješio problem nekompatibilnosti brajičnih kodnih tablica, kada je potrebno printati datoteku koja pripremljena za opremu jedne specifične izdavačke kuće na opremi druge izdavačke kuće, ili kada je potrebno pročitati tu datoteku na brajičnom redku.",

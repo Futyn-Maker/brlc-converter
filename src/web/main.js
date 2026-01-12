@@ -92,6 +92,131 @@ function generate(inFormat, outFormat, inTextFile) {
   };
 }
 
+/**
+ * Updates all UI elements with localized text.
+ * @param {Function} t - i18next translation function
+ */
+function updateUITranslations(t) {
+  document.documentElement.lang = window.i18next.language;
+
+  const elements = document.querySelectorAll('[id]');
+  elements.forEach(el => {
+    const key = el.id.replace(/-/g, '_');
+    const translation = t(key);
+    if (translation !== key) {
+      // Use innerHTML for keys that contain links
+      if (key === 'app_description' || key === 'footer_support' || key === 'footer_contact') {
+        el.innerHTML = translation;
+      } else if (el.tagName === 'INPUT' && el.type === 'submit') {
+        el.value = translation;
+      } else {
+        el.textContent = translation;
+      }
+    }
+  });
+
+  // Special case for <title>
+  document.title = t('app_title');
+
+  // Update language menu aria-label
+  const langMenu = document.getElementById('language-menu');
+  langMenu.setAttribute('aria-label', t('language_selector_label'));
+
+  // Update language selector button text
+  const langButton = document.getElementById('language-selector-button');
+  langButton.textContent = t('language_selector_label');
+
+  // Update header brand link
+  const headerBrand = document.getElementById('header-brand');
+  headerBrand.textContent = t('app_title');
+}
+
+/**
+ * Builds the language selector menu from available locales.
+ * @param {string} currentLang - The currently active language code
+ */
+function buildLanguageMenu(currentLang) {
+  const langList = document.getElementById('language-list');
+  langList.innerHTML = '';
+
+  const locales = window.brlcLocales;
+  const langCodes = Object.keys(locales).sort();
+
+  langCodes.forEach(langCode => {
+    const langName = locales[langCode].translation.language_name || langCode;
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = '#';
+    link.className = 'dropdown-item';
+    link.textContent = langName;
+    link.dataset.lang = langCode;
+
+    if (langCode === currentLang) {
+      link.setAttribute('aria-current', 'page');
+      link.classList.add('active');
+    }
+
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      changeLanguage(langCode);
+    });
+
+    li.appendChild(link);
+    langList.appendChild(li);
+  });
+}
+
+/**
+ * Changes the interface language.
+ * @param {string} langCode - The language code to switch to
+ */
+function changeLanguage(langCode) {
+  const i18n = window.i18next;
+  i18n.changeLanguage(langCode, function (err, t) {
+    if (err) {
+      console.error('Error changing language:', err);
+      return;
+    }
+    updateUITranslations(t);
+    buildLanguageMenu(langCode);
+    closeLanguageMenu();
+
+    // Focus brand link after language change for screen reader announcement
+    setTimeout(function () {
+      document.getElementById('header-brand').focus();
+    }, 200);
+  });
+}
+
+/**
+ * Toggles the language menu visibility.
+ */
+function toggleLanguageMenu() {
+  const menu = document.getElementById('language-menu');
+  const button = document.getElementById('language-selector-button');
+  const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+  if (isExpanded) {
+    closeLanguageMenu();
+  } else {
+    menu.style.display = 'block';
+    menu.style.position = 'absolute';
+    menu.style.right = '1rem';
+    menu.style.top = '3.5rem';
+    button.setAttribute('aria-expanded', 'true');
+  }
+}
+
+/**
+ * Closes the language menu.
+ */
+function closeLanguageMenu() {
+  const menu = document.getElementById('language-menu');
+  const button = document.getElementById('language-selector-button');
+  menu.style.display = 'none';
+  button.setAttribute('aria-expanded', 'false');
+}
+
 function initApp() {
   const i18n = window.i18next;
   const LngDetector = window.i18nextBrowserLanguageDetector;
@@ -106,28 +231,22 @@ function initApp() {
       if (err) {
         console.error('Error initializing i18next:', err);
       }
-      // Update all UI elements with localized text
-      document.documentElement.lang = i18n.language;
-
-      const elements = document.querySelectorAll('[id]');
-      elements.forEach(el => {
-        const key = el.id.replace(/-/g, '_');
-        const translation = t(key);
-        if (translation !== key) {
-          // Use innerHTML for keys that contain links
-          if (key === 'app_description' || key === 'footer_support' || key === 'footer_contact') {
-            el.innerHTML = translation;
-          } else if (el.tagName === 'INPUT' && el.type === 'submit') {
-            el.value = translation;
-          } else {
-            el.textContent = translation;
-          }
-        }
-      });
-
-      // Special case for <title>
-      document.title = t('app_title');
+      updateUITranslations(t);
+      buildLanguageMenu(i18n.language);
     });
+
+  // Language selector button click handler
+  const langButton = document.getElementById('language-selector-button');
+  langButton.addEventListener('click', toggleLanguageMenu);
+
+  // Close menu when clicking outside
+  document.addEventListener('click', function (e) {
+    const menu = document.getElementById('language-menu');
+    const button = document.getElementById('language-selector-button');
+    if (!menu.contains(e.target) && e.target !== button) {
+      closeLanguageMenu();
+    }
+  });
 
   // Attach form listener
   const form = document.querySelector('form[name="args"]');

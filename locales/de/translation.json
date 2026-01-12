@@ -1,4 +1,6 @@
 {
+  "language_name": "Deutsch",
+  "language_selector_label": "Sprache",
   "app_title": "Braille-Kodierungskonverter",
   "app_title_h1": "Braille-Kodierungskonverter",
   "app_description": "Dieser Dienst ermöglicht die Konvertierung einer braillefähigen Datei zwischen unterschiedlichen Braille-Zeichensätzen. Eine Braille-Kodierung bezeichnet einen Zeichensatz zur codierten Darstellung von Braille-Punktmustern. Historisch bedingt kommen in verschiedenen Ländern sowie bei unterschiedlichen Druckereien unterschiedliche Zeichensätze zur Anwendung. Ursache hierfür sind insbesondere die eingesetzte Ausgabetechnik sowie die Besonderheiten der jeweiligen Schriftsysteme. Das Werkzeug dient der Auflösung von Inkompatibilitäten zwischen Braille-Kodierungen, etwa bei der Ausgabe einer Datei auf fremder Produktionstechnik oder beim Zugriff über eine Braillezeile.",
