@@ -39,44 +39,95 @@
 
     <hr>
 
-    <form name="args" action="" role="form">
-      <div class="mb-3">
-        <label for="inFormat" class="form-label" id="label-inFormat">Source Format:</label>
-        <select name="inFormat" id="inFormat" class="form-select">
-          <option value="unicode" id="opt-unicode-1">Braille Unicode</option>
-          <option value="brf" id="opt-brf-1">BRF (Braille ASCII)</option>
-          <option value="nabcc" id="opt-nabcc-1">BRF (North American Braille Computer Code)</option>
-          <option value="eurobraille" id="opt-eurobraille-1">Eurobraille</option>
-          <option value="chtenie" id="opt-chtenie-1">"CHTENIE" Publishing House of All-Russia Society of the blind
-            braille encoding</option>
-          <option value="logos" id="opt-logos-1">Logos braille encoding</option>
-          <option value="gost" id="opt-gost-1">GOST R 58511-2019</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label for="inText" class="form-label" id="label-inText">File to convert:</label>
-        <input type="file" name="inText" id="inText" class="form-control" required />
-      </div>
-      <div class="mb-3">
-        <label for="outFormat" class="form-label" id="label-outFormat">Output Format:</label>
-        <select name="outFormat" id="outFormat" class="form-select">
-          <option value="unicode" id="opt-unicode-2">Braille Unicode</option>
-          <option value="brf" id="opt-brf-2">BRF (Braille ASCII)</option>
-          <option value="nabcc" id="opt-nabcc-2">BRF (North American Braille Computer Code)</option>
-          <option value="eurobraille" id="opt-eurobraille-2">Eurobraille</option>
-          <option value="chtenie" id="opt-chtenie-2">"CHTENIE" Publishing House of All-Russia Society of the blind
-            braille encoding</option>
-          <option value="logos" id="opt-logos-2">Logos braille encoding</option>
-          <option value="gost" id="opt-gost-2">GOST R 58511-2019</option>
-        </select>
-      </div>
-      <div class="mb-3 form-check" id="force-6dot-container" style="display: none;">
-        <input type="checkbox" class="form-check-input" name="force6dot" id="force-6dot">
-        <label class="form-check-label" for="force-6dot" id="label-force-6dot">Force 6-dot output (discard dots 7 and
-          8)</label>
-      </div>
-      <input type="submit" class="btn btn-primary" id="submit-button" value="Convert" />
-    </form>
+    <!-- Tab navigation -->
+    <div role="tablist" aria-label="Conversion mode" class="mb-3">
+      <button type="button" role="tab" id="tab-file" class="btn btn-primary me-2" aria-selected="true" aria-controls="panel-file" tabindex="0">Convert File</button>
+      <button type="button" role="tab" id="tab-folder" class="btn btn-outline-secondary" aria-selected="false" aria-controls="panel-folder" tabindex="-1">Convert Folder</button>
+    </div>
+
+    <!-- File conversion panel -->
+    <div role="tabpanel" id="panel-file" aria-labelledby="tab-file">
+      <form name="args" action="" role="form">
+        <div class="mb-3">
+          <label for="inFormat" class="form-label" id="label-inFormat">Source Format:</label>
+          <select name="inFormat" id="inFormat" class="form-select">
+            <option value="unicode" id="opt-unicode-1">Braille Unicode</option>
+            <option value="brf" id="opt-brf-1">BRF (Braille ASCII)</option>
+            <option value="nabcc" id="opt-nabcc-1">BRF (North American Braille Computer Code)</option>
+            <option value="eurobraille" id="opt-eurobraille-1">Eurobraille</option>
+            <option value="chtenie" id="opt-chtenie-1">"CHTENIE" Publishing House of All-Russia Society of the blind
+              braille encoding</option>
+            <option value="logos" id="opt-logos-1">Logos braille encoding</option>
+            <option value="gost" id="opt-gost-1">GOST R 58511-2019</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="inText" class="form-label" id="label-inText">File to convert:</label>
+          <input type="file" name="inText" id="inText" class="form-control" required />
+        </div>
+        <div class="mb-3">
+          <label for="outFormat" class="form-label" id="label-outFormat">Output Format:</label>
+          <select name="outFormat" id="outFormat" class="form-select">
+            <option value="unicode" id="opt-unicode-2">Braille Unicode</option>
+            <option value="brf" id="opt-brf-2">BRF (Braille ASCII)</option>
+            <option value="nabcc" id="opt-nabcc-2">BRF (North American Braille Computer Code)</option>
+            <option value="eurobraille" id="opt-eurobraille-2">Eurobraille</option>
+            <option value="chtenie" id="opt-chtenie-2">"CHTENIE" Publishing House of All-Russia Society of the blind
+              braille encoding</option>
+            <option value="logos" id="opt-logos-2">Logos braille encoding</option>
+            <option value="gost" id="opt-gost-2">GOST R 58511-2019</option>
+          </select>
+        </div>
+        <div class="mb-3 form-check" id="force-6dot-container" style="display: none;">
+          <input type="checkbox" class="form-check-input" name="force6dot" id="force-6dot">
+          <label class="form-check-label" for="force-6dot" id="label-force-6dot">Force 6-dot output (discard dots 7 and
+            8)</label>
+        </div>
+        <input type="submit" class="btn btn-primary" id="submit-button" value="Convert" />
+      </form>
+    </div>
+
+    <!-- Folder conversion panel -->
+    <div role="tabpanel" id="panel-folder" aria-labelledby="tab-folder" style="display: none;">
+      <form name="argsFolder" action="" role="form">
+        <div class="mb-3">
+          <label for="inFormatFolder" class="form-label" id="label-inFormat-folder">Source Format:</label>
+          <select name="inFormat" id="inFormatFolder" class="form-select">
+            <option value="unicode" id="opt-unicode-1-folder">Braille Unicode</option>
+            <option value="brf" id="opt-brf-1-folder">BRF (Braille ASCII)</option>
+            <option value="nabcc" id="opt-nabcc-1-folder">BRF (North American Braille Computer Code)</option>
+            <option value="eurobraille" id="opt-eurobraille-1-folder">Eurobraille</option>
+            <option value="chtenie" id="opt-chtenie-1-folder">"CHTENIE" Publishing House of All-Russia Society of the blind
+              braille encoding</option>
+            <option value="logos" id="opt-logos-1-folder">Logos braille encoding</option>
+            <option value="gost" id="opt-gost-1-folder">GOST R 58511-2019</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="inFolder" class="form-label" id="label-inFolder">Folder to convert:</label>
+          <input type="file" name="inFolder" id="inFolder" class="form-control" webkitdirectory directory required />
+        </div>
+        <div class="mb-3">
+          <label for="outFormatFolder" class="form-label" id="label-outFormat-folder">Output Format:</label>
+          <select name="outFormat" id="outFormatFolder" class="form-select">
+            <option value="unicode" id="opt-unicode-2-folder">Braille Unicode</option>
+            <option value="brf" id="opt-brf-2-folder">BRF (Braille ASCII)</option>
+            <option value="nabcc" id="opt-nabcc-2-folder">BRF (North American Braille Computer Code)</option>
+            <option value="eurobraille" id="opt-eurobraille-2-folder">Eurobraille</option>
+            <option value="chtenie" id="opt-chtenie-2-folder">"CHTENIE" Publishing House of All-Russia Society of the blind
+              braille encoding</option>
+            <option value="logos" id="opt-logos-2-folder">Logos braille encoding</option>
+            <option value="gost" id="opt-gost-2-folder">GOST R 58511-2019</option>
+          </select>
+        </div>
+        <div class="mb-3 form-check" id="force-6dot-container-folder" style="display: none;">
+          <input type="checkbox" class="form-check-input" name="force6dot" id="force-6dot-folder">
+          <label class="form-check-label" for="force-6dot-folder" id="label-force-6dot-folder">Force 6-dot output (discard dots 7 and
+            8)</label>
+        </div>
+        <input type="submit" class="btn btn-primary" id="submit-button-folder" value="Convert" />
+      </form>
+    </div>
 
     <div id="status" style="display: none;" tabindex="-1"></div>
     <div id="download-container"></div>
@@ -92,6 +143,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
     crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="locales.js"></script>
   <script src="data.js"></script>
   <script src="convert.bundle.js"></script>

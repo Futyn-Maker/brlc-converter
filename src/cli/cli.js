@@ -65,29 +65,127 @@ function findAvailablePort(port, isDaemon = false) {
   });
 }
 
+/**
+ * Gets the output file extension for a given format.
+ * @param {object|string} outFormat - Output format map or 'unicode'
+ * @returns {string} - File extension (e.g., ".txt", ".brf")
+ */
+function getOutputExtension(outFormat) {
+  if (outFormat === 'unicode') {
+    return '.txt';
+  }
+  return '.' + outFormat.format;
+}
+
+/**
+ * Generates output filename from input filename.
+ * @param {string} inputPath - Input file path
+ * @param {object|string} outFormat - Output format map or 'unicode'
+ * @returns {string} - Output filename (without directory)
+ */
+function getOutputFileName(inputPath, outFormat) {
+  const baseName = path.basename(inputPath).replace(/\.\w+$/, "");
+  return baseName + getOutputExtension(outFormat);
+}
+
+/**
+ * Converts a single file.
+ * @param {string} inputPath - Path to input file
+ * @param {string} outputPath - Path to output file
+ * @param {object|string} inFormat - Input format map or 'unicode'
+ * @param {object|string} outFormat - Output format map or 'unicode'
+ * @param {boolean} force6dot - Whether to force 6-dot output
+ */
+function convertSingleFile(inputPath, outputPath, inFormat, outFormat, force6dot) {
+  const inText = fs.readFileSync(inputPath);
+  const outText = convert(inFormat, outFormat, inText, force6dot);
+  fs.writeFileSync(outputPath, outText);
+}
+
+/**
+ * Converts all files in a directory.
+ * @param {string} inputDir - Path to input directory
+ * @param {string} outputDir - Path to output directory
+ * @param {object|string} inFormat - Input format map or 'unicode'
+ * @param {object|string} outFormat - Output format map or 'unicode'
+ * @param {boolean} force6dot - Whether to force 6-dot output
+ */
+function convertDirectory(inputDir, outputDir, inFormat, outFormat, force6dot) {
+  // Create output directory if it doesn't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  // Get all files in the input directory (non-recursive)
+  const files = fs.readdirSync(inputDir).filter(file => {
+    const filePath = path.join(inputDir, file);
+    return fs.statSync(filePath).isFile();
+  });
+
+  if (files.length === 0) {
+    console.log('No files found in the input directory.');
+    return;
+  }
+
+  console.log(`Converting ${files.length} file(s)...`);
+
+  let convertedCount = 0;
+  let errorCount = 0;
+
+  for (const file of files) {
+    const inputPath = path.join(inputDir, file);
+    const outputFileName = getOutputFileName(inputPath, outFormat);
+    const outputPath = path.join(outputDir, outputFileName);
+
+    try {
+      convertSingleFile(inputPath, outputPath, inFormat, outFormat, force6dot);
+      convertedCount++;
+      console.log(`  Converted: ${file} -> ${outputFileName}`);
+    } catch (e) {
+      errorCount++;
+      console.error(`  Error converting ${file}: ${e.message}`);
+    }
+  }
+
+  console.log(`\nDone! ${convertedCount} file(s) converted${errorCount > 0 ? `, ${errorCount} error(s)` : ''}.`);
+  console.log(`Output directory: ${path.resolve(outputDir)}`);
+}
+
 // CLI Logic
 function runCli(args, pkg) {
   try {
-    let inFormat = loadMap(args.from);
-    let outFormat = loadMap(args.to);
+    const inFormat = loadMap(args.from);
+    const outFormat = loadMap(args.to);
 
-    let inText = fs.readFileSync(args.input);
-    let outText = convert(inFormat, outFormat, inText, args.force6dot);
+    const inputStat = fs.statSync(args.input);
 
-    let fileName = "";
-    if ("output" in args) {
-      fileName = args.output;
-    } else {
-      fileName = args.input.replace(/\.\w+$/, ""); // Remove file extension
-      if (outFormat == "unicode") {
-        fileName += ".txt";
+    if (inputStat.isDirectory()) {
+      // Directory mode
+      const inputDir = args.input;
+      const inputDirName = path.basename(path.resolve(inputDir));
+
+      let outputDir;
+      if ("output" in args) {
+        outputDir = args.output;
       } else {
-        fileName += `.${outFormat.format}`;
+        // Create output folder name: {source_folder_name}_{encoding_name}
+        outputDir = `${inputDirName}_${args.to}`;
       }
-    }
 
-    fs.writeFileSync(fileName, outText);
-    console.log("Done!");
+      convertDirectory(inputDir, outputDir, inFormat, outFormat, args.force6dot);
+    } else {
+      // Single file mode
+      let fileName = "";
+      if ("output" in args) {
+        fileName = args.output;
+      } else {
+        fileName = args.input.replace(/\.\w+$/, ""); // Remove file extension
+        fileName += getOutputExtension(outFormat);
+      }
+
+      convertSingleFile(args.input, fileName, inFormat, outFormat, args.force6dot);
+      console.log("Done!");
+    }
   } catch (e) {
     console.error(`Error during conversion: ${e.message}`);
     process.exit(1);
@@ -248,8 +346,8 @@ async function run() {
     .version(pkg.version)
     .option("-f, --from <format>", "The braille encoding of the input file", "unicode")
     .option("-t, --to <format>", "The braille encoding of the output file", "unicode")
-    .option("-i, --input <file>", "Path to the file to be converted")
-    .option("-o, --output <file>", "Path to the output file")
+    .option("-i, --input <path>", "Path to the file or folder to be converted")
+    .option("-o, --output <path>", "Path to the output file or folder")
     .option("--force-6dot", "Force 6-dot output (remove dots 7/8) when converting to Unicode")
     .showHelpAfterError();
 

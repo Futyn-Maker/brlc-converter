@@ -9,8 +9,11 @@ Braille Encoding Converter (brlc-converter) converts braille files between diffe
 ## Commands
 
 ```bash
-# Run CLI directly
+# Run CLI directly (single file)
 node src/cli/cli.js -i file.brf -f brf -t unicode
+
+# Run CLI directly (folder - batch conversion)
+node src/cli/cli.js -i ./my_folder -f brf -t unicode
 
 # Run local web server (requires dist/ to exist)
 npm start
@@ -32,9 +35,9 @@ npm run build
 ### Core Components
 
 - [src/core/convert.js](src/core/convert.js) - Core conversion logic with intermediate Unicode representation
-- [src/cli/cli.js](src/cli/cli.js) - CLI and local web server. Uses `node:sea` module to detect Single Executable mode
-- [src/web/main.js](src/web/main.js) - Browser-side code using `window.brlcData` and `window.brlcLocales`, handles language switching
-- [src/web/index.html](src/web/index.html) - Web interface with header containing language selector
+- [src/cli/cli.js](src/cli/cli.js) - CLI and local web server. Uses `node:sea` module to detect Single Executable mode. Supports both single file and folder (batch) conversion via `-i` flag
+- [src/web/main.js](src/web/main.js) - Browser-side code using `window.brlcData` and `window.brlcLocales`, handles language switching, tab navigation, and batch folder conversion with JSZip
+- [src/web/index.html](src/web/index.html) - Web interface with header containing language selector. Features accessible tabs for single file and folder conversion modes
 
 ### Conversion Algorithm
 
@@ -97,6 +100,31 @@ Encoding mappings in `data/*.json`:
 - `build:web` - Uses browserify to bundle convert.js, inlines data/*.json into data.js, inlines locales into locales.js
 - `build:sea` - Additionally bundles CLI with esbuild and creates a Node.js Single Executable Application
 
+### Batch Conversion
+
+Both CLI and web interface support batch (folder) conversion:
+
+**CLI:**
+- `-i` accepts either a file path or folder path
+- For folders: converts all files in the directory (non-recursive)
+- Output folder naming: `{source_folder_name}_{encoding_name}` if `-o` not specified
+- If `-o` is specified, outputs directly to that folder
+
+**Web Interface:**
+- Two tabs: "Convert File" and "Convert Folder"
+- Folder conversion uses `webkitdirectory` attribute for folder selection
+- Converts all files and creates a ZIP archive using JSZip (loaded from CDN)
+- ZIP filename: `{folder_name}_{encoding_name}.zip`
+- Progress shown during conversion: "Converting file X of Y..."
+
+**Localization keys for batch conversion:**
+- `tab_file`, `tab_folder` - Tab button labels
+- `label_inFolder` - Folder input label
+- `tablist_label` - Aria label for tab list
+- `statusConverting` - Progress message with `{{current}}` and `{{total}}`
+- `statusBatchDone` - Success message with `{{count}}`
+- `statusBatchPartial` - Partial success with `{{converted}}`, `{{total}}`, `{{errors}}`
+
 ## Adding New Localizations
 
 1. Create folder `locales/{lang_code}/` (e.g., `locales/fr/`)
@@ -134,9 +162,14 @@ The web UI auto-detects browser language via i18next. Users can also manually se
    "opt_{encoding_name}_2": "Format Name (for target dropdown)"
    ```
 
-4. Add options to both `<select>` elements in [src/web/index.html](src/web/index.html):
+4. Add options to all four `<select>` elements in [src/web/index.html](src/web/index.html) (source and target dropdowns in both file and folder panels):
    ```html
+   <!-- File panel -->
    <option value="{encoding_name}" id="opt-{encoding_name}-1">Format Name</option>
+   <option value="{encoding_name}" id="opt-{encoding_name}-2">Format Name</option>
+   <!-- Folder panel -->
+   <option value="{encoding_name}" id="opt-{encoding_name}-1-folder">Format Name</option>
+   <option value="{encoding_name}" id="opt-{encoding_name}-2-folder">Format Name</option>
    ```
 
 5. Rebuild: `npm run build`
