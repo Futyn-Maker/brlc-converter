@@ -27,12 +27,27 @@ The easiest way to convert your files is with the official web interface:
 
 [https://brlc-converter.app](https://brlc-converter.app)
 
-The web interface is straightforward:
+The web interface supports both single file and batch folder conversion:
 
-1.  Select the **Source Format** of your file.
-2.  Choose the **File to convert** using the file picker.
-3.  Select the desired **Output Format**.
-4.  Click the **Convert** button to process the file and receive a download link.
+#### Converting a Single File
+
+1.  Select the **Convert File** tab (default).
+2.  Select the **Source Format** of your file.
+3.  Choose the **File to convert** using the file picker.
+4.  Select the desired **Output Format**.
+5.  Click the **Convert** button to process the file and receive a download link.
+
+#### Converting Multiple Files (Batch Mode)
+
+1.  Select the **Convert Folder** tab.
+2.  Select the **Source Format** of all files in the folder.
+3.  Choose the **Folder to convert** using the folder picker.
+4.  Select the desired **Output Format**.
+5.  Click the **Convert** button to process all files and receive a ZIP archive.
+
+The ZIP file will be named `{folder_name}_{format}.zip` (e.g., `mybooks_unicode.zip`).
+
+> Note: All files in the folder must be in the same braille encoding.
 
 When converting from an 8-dot encoding (like Eurobraille or NABCC) to Braille Unicode, a checkbox will appear: **\"Force 6-dot output (discard dots 7 and 8)\"**. This allows you to replace the 8-dot characters with their 6-dot variants.
 
@@ -96,11 +111,16 @@ Options:
   -V, --version        output the version number
   -f, --from <format>  The braille encoding of the input file (default: "unicode")
   -t, --to <format>    The braille encoding of the output file (default: "unicode")
-  -i, --input <file>   Path to the file to be converted
-  -o, --output <file>  Path to the output file
+  -i, --input <path>   Path to the file or folder to be converted
+  -o, --output <path>  Path to the output file or folder
   --force-6dot         Force 6-dot output (remove dots 7/8) when converting to Unicode
   -h, --help           display help for command
 ```
+
+The `-i` option accepts both files and folders:
+
+* **Single file:** Converts the file and outputs to the same directory (or to `-o` if specified).
+* **Folder:** Converts all files in the folder. If `-o` is not specified, creates a new folder named `{input_folder}_{format}` (e.g., `mybooks_unicode`). If `-o` is specified, outputs directly to that folder.
 
 The arguments for `-f` (`--from`) and `-t` (`--to`) are:
 
@@ -124,6 +144,20 @@ Convert a Eurobraille file to 6-dot Braille Unicode, discarding dots 7 and 8:
 
 ```bash
 node src/cli/cli.js -f eurobraille -t unicode --force-6dot -i mybook.brl -o mybook.txt
+```
+
+Convert all files in a folder from BRF to Braille Unicode:
+
+```bash
+node src/cli/cli.js -f brf -t unicode -i ./my_brf_books
+```
+
+This creates a folder `my_brf_books_unicode` with the converted files.
+
+Convert a folder to a specific output directory:
+
+```bash
+node src/cli/cli.js -f brf -t unicode -i ./my_brf_books -o ./converted
 ```
 
 ## Building from Source
