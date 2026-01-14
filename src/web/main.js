@@ -404,7 +404,7 @@ function buildLanguageMenu(currentLang) {
     link.dataset.lang = langCode;
 
     if (langCode === currentLang) {
-      link.setAttribute('aria-current', 'page');
+      link.setAttribute('aria-current', 'location');
       link.classList.add('active');
     }
 
