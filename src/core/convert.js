@@ -57,21 +57,23 @@ function clearUnicode(inText, isSource8dot, force6dot) {
  * @returns {string} - Intermediate Unicode text with virtual dots.
  */
 function toUnicode(inTable, inText) {
+  // Make a shallow copy to avoid mutating the original table
+  const table = { ...inTable };
   let outText = inText;
   // At first, we need to replace letters A-Z, as they're used as a virtual braille dots
   for (let char of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-    if (char in inTable) {
-      outText = outText.replaceAll(char, inTable[char]);
-      delete inTable[char];
+    if (char in table) {
+      outText = outText.replaceAll(char, table[char]);
+      delete table[char];
     }
   }
   // Now we can replace other characters
-  for (let char in inTable) {
+  for (let char in table) {
     // Append '0' to simple 1-to-1 mappings to distinguish them
-    if (inTable[char].length == 1 && inTable[char].charCodeAt(0) <= 10303) {
-      outText = outText.replaceAll(char, inTable[char] + "0");
+    if (table[char].length == 1 && table[char].charCodeAt(0) <= 10303) {
+      outText = outText.replaceAll(char, table[char] + "0");
     } else {
-      outText = outText.replaceAll(char, inTable[char]);
+      outText = outText.replaceAll(char, table[char]);
     }
   }
   return outText;
