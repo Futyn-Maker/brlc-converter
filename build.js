@@ -40,13 +40,20 @@ async function clean() {
   console.log('Cleaned successfully.');
 }
 
-// Bundle convert.js for the browser
+// Bundle convert.js for the browser with esbuild (exposed as the global `convert`)
 async function bundleConverter() {
   console.log('Bundling converter logic for browser...');
-  const in_file = CORE_SCRIPT;
   const out_file = path.join(DIST_DIR, 'convert.bundle.js');
 
-  await execPromise(`npx browserify ${in_file} -s convert -o ${out_file}`);
+  await esbuild.build({
+    entryPoints: [CORE_SCRIPT],
+    bundle: true,
+    outfile: out_file,
+    platform: 'browser',
+    format: 'iife',
+    globalName: 'convert',
+    logLevel: 'info',
+  });
   console.log('Converter bundled.');
 }
 

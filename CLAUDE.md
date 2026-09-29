@@ -34,7 +34,7 @@ npm run build
 
 ### Core Components
 
-- [src/core/convert.js](src/core/convert.js) - Core conversion logic with intermediate Unicode representation
+- [src/core/convert.js](src/core/convert.js) - Core conversion logic with intermediate Unicode representation, plus input encoding detection
 - [src/cli/cli.js](src/cli/cli.js) - CLI and local web server. Uses `node:sea` module to detect Single Executable mode. Supports both single file and folder (batch) conversion via `-i` flag
 - [src/web/main.js](src/web/main.js) - Browser-side code using `window.brlcData` and `window.brlcLocales`, handles language switching, tab navigation, and batch folder conversion with JSZip
 - [src/web/index.html](src/web/index.html) - Web interface with header containing language selector. Features accessible tabs for single file and folder conversion modes
@@ -50,7 +50,7 @@ The `convert()` function in [convert.js](src/core/convert.js) handles four conve
 
 **Conversion steps (Legacy → Legacy):**
 
-1. Auto-detect input file encoding using `jschardet`, decode with `iconv-lite`
+1. Choose the input file encoding with `detectEncoding()` (see **Input encoding detection** below), decode with `iconv-lite`
 2. `toUnicode()`: Replace source characters with Unicode braille patterns + virtual dot markers
 3. `fromUnicode()`: Look up each braille pattern (with marker) in target encoding's reverse map
 4. Encode output to target encoding
@@ -70,6 +70,18 @@ Example: In Logos encoding, both `#` and `н` map to `⠝`. When converting Logo
 - `н` becomes `⠝0` (with virtual dot 0, for simple 1-to-1 mappings)
 
 This allows the reverse lookup to distinguish them and find the correct target character. Virtual dots are stripped when outputting to Unicode.
+
+**Input encoding detection** (`detectEncoding()` in [convert.js](src/core/convert.js), runs before any conversion):
+
+Input files carry no encoding information, and files of a format are not always stored in the encoding the format was designed for (a CP866-based format may well arrive as Windows-1251 or UTF-8), so the encoding of every input file has to be detected rather than assumed. A statistical detector alone is not reliable for braille files: its language models expect natural-language text, so related code pages (Windows-1250/1252, ISO-8859-x, the Cyrillic code pages) get confused and 8-dot data may be taken for an unrelated script; it may return no encoding at all or one `iconv-lite` cannot decode, which makes `iconv-lite` throw `Encoding not recognized`; and it reports Windows-1252 rather than ISO-8859-1, although the two differ in the 0x80–0x9F range that the 8-dot tables (Eurobraille, NABCC) map to real cells.
+
+The source format's `characters` table defines exactly which characters a file may contain, so `detectEncoding(inText, inMap)` uses it as the judge:
+
+1. A file without bytes ≥ 0x80 decodes identically in every ASCII-compatible encoding, so it is decoded as UTF-8 without any detection.
+2. Otherwise the candidates are jschardet's best guesses (`detectAll()`, at most `MAX_GUESSES`), the `encoding` declared in the source format's data file, UTF-8 and ISO-8859-1. Names iconv-lite cannot decode are dropped or aliased (`ENCODING_ALIASES`); ISO-8859-1 shares the confidence of a Windows-1252 guess.
+3. Each candidate is scored by the number of decoded non-ASCII characters that are not keys of the `characters` table (for the `unicode` source: not in the Unicode braille block; U+FFFD always counts), plus a penalty for jschardet's lack of confidence in it relative to its best guess (`CONFIDENCE_WEIGHT_RATIO`, `MIN_CONFIDENCE_WEIGHT`). The lowest score wins; ties go to the candidate jschardet ranked higher.
+
+The declared encoding is therefore only a fallback, never an assumption: jschardet's best guess wins as long as the decoded text fits the format, and another candidate replaces it only when it fits clearly better.
 
 ### Data Files Structure
 
@@ -97,7 +109,7 @@ Encoding mappings in `data/*.json`:
 ### Build System
 
 [build.js](build.js) bundles the application:
-- `build:web` - Uses browserify to bundle convert.js, inlines data/*.json into data.js, inlines locales into locales.js
+- `build:web` - Uses esbuild to bundle convert.js for the browser as the global `convert` (the `buffer` and `string_decoder` packages provide the Node.js polyfills iconv-lite needs), inlines data/*.json into data.js, inlines locales into locales.js
 - `build:sea` - Additionally bundles CLI with esbuild and creates a Node.js Single Executable Application
 
 ### Batch Conversion
