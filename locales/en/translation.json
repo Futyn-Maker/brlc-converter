@@ -34,7 +34,7 @@
   "statusError": "Error during conversion: {{message}}",
   "statusFileError": "Error reading the file. Please try again.",
   "downloadLinkText": "Download {{fileName}}",
-  "footer_copyright": "© Andrey Yakuboy, 2025.",
+  "footer_copyright": "© Andrey Yakuboy, 2026.",
   "footer_contact": "Contact: <a href=\"mailto:braille@yakuboy.ru\">braille@yakuboy.ru</a>.",
   "footer_github": "Source code on GitHub"
 }

@@ -34,7 +34,7 @@
   "statusError": "Ошибка при конвертации: {{message}}",
   "statusFileError": "Ошибка чтения файла. Пожалуйста, попробуйте еще раз.",
   "downloadLinkText": "Скачать {{fileName}}",
-  "footer_copyright": "© Андрей Якубой, 2025.",
+  "footer_copyright": "© Андрей Якубой, 2026.",
   "footer_contact": "По всем вопросам: <a href=\"mailto:braille@yakuboy.ru\">braille@yakuboy.ru</a>.",
   "footer_github": "Исходный код на GitHub"
 }

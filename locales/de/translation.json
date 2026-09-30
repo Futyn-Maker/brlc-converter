@@ -34,7 +34,7 @@
   "statusError": "Fehler während der Konvertierung: {{message}}",
   "statusFileError": "Fehler beim Einlesen der Datei. Der Vorgang konnte nicht abgeschlossen werden.",
   "downloadLinkText": "Ausgabedatei {{fileName}} herunterladen",
-  "footer_copyright": "© Andrey Yakuboy, 2025.",
+  "footer_copyright": "© Andrey Yakuboy, 2026.",
   "footer_contact": "Kontakt: <a href=\"mailto:braille@yakuboy.ru\">braille@yakuboy.ru</a>.",
   "footer_github": "Quellcode auf GitHub"
 }

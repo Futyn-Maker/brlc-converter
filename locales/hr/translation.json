@@ -34,7 +34,7 @@
   "statusError": "Greška prilikom konverzije: {{message}}",
   "statusFileError": "Greška prilikom čitanja datoteke. Molimo pokušajte ponovno.",
   "downloadLinkText": "Preuzmi {{fileName}}",
-  "footer_copyright": "© Andrej Jakuboy, 2025.",
+  "footer_copyright": "© Andrej Jakuboy, 2026.",
   "footer_contact": "Kontakt: <a href=\"mailto:braille@yakuboy.ru\">braille@yakuboy.ru</a>.",
   "footer_github": "Izvorni kod na GitHubu"
 }
